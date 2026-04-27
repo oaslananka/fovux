@@ -26,7 +26,6 @@ def get_fovux_home() -> Path:
     return default_home
 
 
-
 def ensure_fovux_dirs(home: Path | None = None) -> FovuxPaths:
     """Create all required Fovux subdirectories and return a FovuxPaths instance.
 
