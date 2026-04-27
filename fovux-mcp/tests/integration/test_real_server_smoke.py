@@ -34,7 +34,7 @@ def fovux_server():
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        cwd=str(REPO_ROOT / "fovux-mcp"),
+        cwd=str(REPO_ROOT),
     )
 
     # Wait for the server to start
