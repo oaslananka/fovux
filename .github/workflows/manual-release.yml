@@ -103,7 +103,7 @@ jobs:
           doppler run \
             --project "${DOPPLER_PROJECT:-all}" \
             --config "${DOPPLER_CONFIG:-main}" \
-            -- bash -c 'twine upload fovux-mcp/dist/* --non-interactive -u __token__ -p "$PYPI_TOKEN"'
+            -- bash -c 'twine upload fovux-mcp/dist/*.whl fovux-mcp/dist/*.tar.gz --non-interactive -u __token__ -p "$PYPI_TOKEN"'
 
       - name: Publish to VS Code Marketplace
         if: inputs.publish == 'true' && (inputs.target == 'all' || inputs.target == 'marketplace')
