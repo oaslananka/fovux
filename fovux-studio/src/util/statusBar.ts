@@ -26,17 +26,13 @@ export function updateCompatStatusBar(state: CompatState): void {
       compatItem.text = "$(warning) Fovux: connected (supported)";
       compatItem.tooltip =
         "fovux-mcp server version is supported but below recommended. Consider upgrading.";
-      compatItem.backgroundColor = new vscode.ThemeColor(
-        "statusBarItem.warningBackground"
-      );
+      compatItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
       break;
     case "incompatible":
       compatItem.text = "$(error) Fovux: incompatible";
       compatItem.tooltip =
         "fovux-mcp server version is outside the supported range. Tool calls are suspended.";
-      compatItem.backgroundColor = new vscode.ThemeColor(
-        "statusBarItem.errorBackground"
-      );
+      compatItem.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
       compatItem.command = "fovux.openUpgradeGuide";
       break;
   }

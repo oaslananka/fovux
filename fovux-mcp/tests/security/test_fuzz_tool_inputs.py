@@ -7,9 +7,6 @@ rather than crashing or leaking information).
 
 from __future__ import annotations
 
-import importlib
-from pathlib import Path
-
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st

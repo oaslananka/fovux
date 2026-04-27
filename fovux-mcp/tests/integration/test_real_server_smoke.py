@@ -6,7 +6,6 @@ only in CI with the `integration` marker.
 
 from __future__ import annotations
 
-import json
 import subprocess
 import sys
 import time
@@ -22,7 +21,7 @@ SERVER_PORT = 17823  # Use a non-default port to avoid conflicts
 @pytest.fixture(scope="module")
 def fovux_server():
     """Start a fovux-mcp server for the duration of the module."""
-    proc = subprocess.Popen(
+    proc = subprocess.Popen(  # noqa: S603, S607
         [
             sys.executable,
             "-m",
@@ -66,7 +65,7 @@ class TestRealServerSmoke:
     """Smoke tests against a real fovux-mcp server."""
 
     def test_health_returns_version(self, fovux_server: str) -> None:
-        resp = requests.get(f"{fovux_server}/health")
+        resp = requests.get(f"{fovux_server}/health", timeout=10)
         assert resp.ok
         data = resp.json()
         assert "version" in data
@@ -76,12 +75,12 @@ class TestRealServerSmoke:
     def test_health_version_matches_package(self, fovux_server: str) -> None:
         from fovux import __version__
 
-        resp = requests.get(f"{fovux_server}/health")
+        resp = requests.get(f"{fovux_server}/health", timeout=10)
         data = resp.json()
         assert data["version"] == __version__
 
     def test_list_runs_returns_list(self, fovux_server: str) -> None:
-        resp = requests.get(f"{fovux_server}/runs")
+        resp = requests.get(f"{fovux_server}/runs", timeout=10)
         # May return 401 if auth is required — that's also acceptable
         assert resp.status_code in (200, 401)
         if resp.ok:
@@ -91,5 +90,6 @@ class TestRealServerSmoke:
         resp = requests.post(
             f"{fovux_server}/tools/nonexistent_tool",
             json={},
+            timeout=10,
         )
         assert resp.status_code in (404, 401)

@@ -176,7 +176,11 @@
         "displayName": "Call Fovux MCP Tool",
         "modelDescription": "Call a local fovux-mcp tool after user confirmation. Use for computer-vision dataset, training, evaluation, export, inference, and run-management tasks.",
         "icon": "$(eye)",
-        "tags": ["fovux", "mcp", "computer-vision"],
+        "tags": [
+          "fovux",
+          "mcp",
+          "computer-vision"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -190,7 +194,9 @@
               "additionalProperties": true
             }
           },
-          "required": ["tool"]
+          "required": [
+            "tool"
+          ]
         }
       },
       {
@@ -198,12 +204,22 @@
         "toolReferenceName": "fovux_dataset_inspect",
         "displayName": "Inspect Dataset",
         "modelDescription": "Analyze a YOLO dataset directory and generate a quality report including class distribution, image counts, and annotation statistics.",
-        "tags": ["fovux", "dataset"],
+        "tags": [
+          "fovux",
+          "dataset"
+        ],
         "canBeReferencedInPrompt": true,
         "inputSchema": {
           "type": "object",
-          "properties": { "dataset_path": { "type": "string", "description": "Path to the YOLO dataset directory containing data.yaml." } },
-          "required": ["dataset_path"]
+          "properties": {
+            "dataset_path": {
+              "type": "string",
+              "description": "Path to the YOLO dataset directory containing data.yaml."
+            }
+          },
+          "required": [
+            "dataset_path"
+          ]
         }
       },
       {
@@ -211,11 +227,21 @@
         "toolReferenceName": "fovux_dataset_validate",
         "displayName": "Validate Dataset",
         "modelDescription": "Validate a YOLO dataset for structural correctness: checks data.yaml, image-label pairing, and annotation format.",
-        "tags": ["fovux", "dataset"],
+        "tags": [
+          "fovux",
+          "dataset"
+        ],
         "inputSchema": {
           "type": "object",
-          "properties": { "dataset_path": { "type": "string", "description": "Path to the YOLO dataset directory." } },
-          "required": ["dataset_path"]
+          "properties": {
+            "dataset_path": {
+              "type": "string",
+              "description": "Path to the YOLO dataset directory."
+            }
+          },
+          "required": [
+            "dataset_path"
+          ]
         }
       },
       {
@@ -223,14 +249,25 @@
         "toolReferenceName": "fovux_dataset_find_duplicates",
         "displayName": "Find Dataset Duplicates",
         "modelDescription": "Detect duplicate or near-duplicate images in a YOLO dataset using perceptual hashing.",
-        "tags": ["fovux", "dataset"],
+        "tags": [
+          "fovux",
+          "dataset"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
-            "dataset_path": { "type": "string", "description": "Path to the YOLO dataset directory." },
-            "threshold": { "type": "number", "description": "Hash distance threshold (default 8)." }
+            "dataset_path": {
+              "type": "string",
+              "description": "Path to the YOLO dataset directory."
+            },
+            "threshold": {
+              "type": "number",
+              "description": "Hash distance threshold (default 8)."
+            }
           },
-          "required": ["dataset_path"]
+          "required": [
+            "dataset_path"
+          ]
         }
       },
       {
@@ -238,18 +275,41 @@
         "toolReferenceName": "fovux_train_start",
         "displayName": "Start Training",
         "modelDescription": "Launch a new YOLO training run with specified dataset, model, epochs, batch size, and device.",
-        "tags": ["fovux", "training"],
+        "tags": [
+          "fovux",
+          "training"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
-            "dataset_path": { "type": "string", "description": "Path to the YOLO training dataset." },
-            "model": { "type": "string", "description": "Model architecture (e.g., yolov8n.pt)." },
-            "epochs": { "type": "integer", "description": "Number of training epochs." },
-            "batch": { "type": "integer", "description": "Batch size." },
-            "imgsz": { "type": "integer", "description": "Training image size." },
-            "device": { "type": "string", "description": "Device: auto, cpu, 0, 1, etc." }
+            "dataset_path": {
+              "type": "string",
+              "description": "Path to the YOLO training dataset."
+            },
+            "model": {
+              "type": "string",
+              "description": "Model architecture (e.g., yolov8n.pt)."
+            },
+            "epochs": {
+              "type": "integer",
+              "description": "Number of training epochs."
+            },
+            "batch": {
+              "type": "integer",
+              "description": "Batch size."
+            },
+            "imgsz": {
+              "type": "integer",
+              "description": "Training image size."
+            },
+            "device": {
+              "type": "string",
+              "description": "Device: auto, cpu, 0, 1, etc."
+            }
           },
-          "required": ["dataset_path"]
+          "required": [
+            "dataset_path"
+          ]
         }
       },
       {
@@ -257,12 +317,22 @@
         "toolReferenceName": "fovux_train_status",
         "displayName": "Training Status",
         "modelDescription": "Get the current metrics and status for an ongoing or completed YOLO training run.",
-        "tags": ["fovux", "training"],
+        "tags": [
+          "fovux",
+          "training"
+        ],
         "canBeReferencedInPrompt": true,
         "inputSchema": {
           "type": "object",
-          "properties": { "run_id": { "type": "string", "description": "ID of the training run." } },
-          "required": ["run_id"]
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "description": "ID of the training run."
+            }
+          },
+          "required": [
+            "run_id"
+          ]
         }
       },
       {
@@ -270,11 +340,21 @@
         "toolReferenceName": "fovux_train_stop",
         "displayName": "Stop Training",
         "modelDescription": "Stop a running YOLO training run by its run ID.",
-        "tags": ["fovux", "training"],
+        "tags": [
+          "fovux",
+          "training"
+        ],
         "inputSchema": {
           "type": "object",
-          "properties": { "run_id": { "type": "string", "description": "ID of the training run to stop." } },
-          "required": ["run_id"]
+          "properties": {
+            "run_id": {
+              "type": "string",
+              "description": "ID of the training run to stop."
+            }
+          },
+          "required": [
+            "run_id"
+          ]
         }
       },
       {
@@ -282,15 +362,27 @@
         "toolReferenceName": "fovux_eval_run",
         "displayName": "Run Evaluation",
         "modelDescription": "Evaluate a YOLO model checkpoint against a validation dataset and return mAP metrics.",
-        "tags": ["fovux", "evaluation"],
+        "tags": [
+          "fovux",
+          "evaluation"
+        ],
         "canBeReferencedInPrompt": true,
         "inputSchema": {
           "type": "object",
           "properties": {
-            "checkpoint": { "type": "string", "description": "Model checkpoint path or name." },
-            "dataset_path": { "type": "string", "description": "Validation dataset path." }
+            "checkpoint": {
+              "type": "string",
+              "description": "Model checkpoint path or name."
+            },
+            "dataset_path": {
+              "type": "string",
+              "description": "Validation dataset path."
+            }
           },
-          "required": ["checkpoint", "dataset_path"]
+          "required": [
+            "checkpoint",
+            "dataset_path"
+          ]
         }
       },
       {
@@ -298,14 +390,26 @@
         "toolReferenceName": "fovux_eval_compare",
         "displayName": "Compare Evaluations",
         "modelDescription": "Compare metrics between two training runs side by side.",
-        "tags": ["fovux", "evaluation"],
+        "tags": [
+          "fovux",
+          "evaluation"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
-            "run_id_a": { "type": "string", "description": "First run ID." },
-            "run_id_b": { "type": "string", "description": "Second run ID." }
+            "run_id_a": {
+              "type": "string",
+              "description": "First run ID."
+            },
+            "run_id_b": {
+              "type": "string",
+              "description": "Second run ID."
+            }
           },
-          "required": ["run_id_a", "run_id_b"]
+          "required": [
+            "run_id_a",
+            "run_id_b"
+          ]
         }
       },
       {
@@ -313,14 +417,25 @@
         "toolReferenceName": "fovux_export_onnx",
         "displayName": "Export to ONNX",
         "modelDescription": "Export a PyTorch YOLO checkpoint to ONNX format with configurable opset and input shapes.",
-        "tags": ["fovux", "export"],
+        "tags": [
+          "fovux",
+          "export"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
-            "checkpoint": { "type": "string", "description": "Model checkpoint to export." },
-            "imgsz": { "type": "integer", "description": "Export image size." }
+            "checkpoint": {
+              "type": "string",
+              "description": "Model checkpoint to export."
+            },
+            "imgsz": {
+              "type": "integer",
+              "description": "Export image size."
+            }
           },
-          "required": ["checkpoint"]
+          "required": [
+            "checkpoint"
+          ]
         }
       },
       {
@@ -328,14 +443,25 @@
         "toolReferenceName": "fovux_export_tflite",
         "displayName": "Export to TFLite",
         "modelDescription": "Export a YOLO checkpoint to TensorFlow Lite format for mobile and edge deployment.",
-        "tags": ["fovux", "export"],
+        "tags": [
+          "fovux",
+          "export"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
-            "checkpoint": { "type": "string", "description": "Model checkpoint to export." },
-            "imgsz": { "type": "integer", "description": "Export image size." }
+            "checkpoint": {
+              "type": "string",
+              "description": "Model checkpoint to export."
+            },
+            "imgsz": {
+              "type": "integer",
+              "description": "Export image size."
+            }
           },
-          "required": ["checkpoint"]
+          "required": [
+            "checkpoint"
+          ]
         }
       },
       {
@@ -343,14 +469,26 @@
         "toolReferenceName": "fovux_quantize_int8",
         "displayName": "Quantize INT8",
         "modelDescription": "Quantize a model to INT8 precision using a calibration dataset for edge deployment.",
-        "tags": ["fovux", "export"],
+        "tags": [
+          "fovux",
+          "export"
+        ],
         "inputSchema": {
           "type": "object",
           "properties": {
-            "checkpoint": { "type": "string", "description": "Model checkpoint to quantize." },
-            "calibration_dataset": { "type": "string", "description": "Path to calibration dataset." }
+            "checkpoint": {
+              "type": "string",
+              "description": "Model checkpoint to quantize."
+            },
+            "calibration_dataset": {
+              "type": "string",
+              "description": "Path to calibration dataset."
+            }
           },
-          "required": ["checkpoint", "calibration_dataset"]
+          "required": [
+            "checkpoint",
+            "calibration_dataset"
+          ]
         }
       },
       {
@@ -358,7 +496,10 @@
         "toolReferenceName": "fovux_doctor",
         "displayName": "System Doctor",
         "modelDescription": "Run a diagnostic health check covering CUDA, disk, CPU, RAM, dependencies, and active training runs.",
-        "tags": ["fovux", "system"],
+        "tags": [
+          "fovux",
+          "system"
+        ],
         "canBeReferencedInPrompt": true,
         "inputSchema": {
           "type": "object",
@@ -569,43 +710,67 @@
             "id": "installBackend",
             "title": "Install the Backend",
             "description": "Install `fovux-mcp` to power your tools.\n[Install Backend](command:fovux.installBackend)",
-            "media": { "markdown": "resources/walkthroughs/01-install-backend.md" },
-            "completionEvents": ["onContext:fovux.walkthrough.backendInstalled"]
+            "media": {
+              "markdown": "resources/walkthroughs/01-install-backend.md"
+            },
+            "completionEvents": [
+              "onContext:fovux.walkthrough.backendInstalled"
+            ]
           },
           {
             "id": "setProfile",
             "title": "Set Your Profile",
             "description": "Configure your FOVUX_HOME directory.",
-            "media": { "markdown": "resources/walkthroughs/02-set-profile.md" },
-            "completionEvents": ["onSettingChanged:fovux.home"]
+            "media": {
+              "markdown": "resources/walkthroughs/02-set-profile.md"
+            },
+            "completionEvents": [
+              "onSettingChanged:fovux.home"
+            ]
           },
           {
             "id": "startServer",
             "title": "Start the Server",
             "description": "Start the local HTTP server.\n[Start Server](command:fovux.startServer)",
-            "media": { "markdown": "resources/walkthroughs/03-start-server.md" },
-            "completionEvents": ["onCommand:fovux.startServer"]
+            "media": {
+              "markdown": "resources/walkthroughs/03-start-server.md"
+            },
+            "completionEvents": [
+              "onCommand:fovux.startServer"
+            ]
           },
           {
             "id": "runDoctor",
             "title": "Run Doctor",
             "description": "Check your environment.\n[Run Doctor](command:fovux.runDoctor)",
-            "media": { "markdown": "resources/walkthroughs/04-run-doctor.md" },
-            "completionEvents": ["onContext:fovux.walkthrough.doctorRan"]
+            "media": {
+              "markdown": "resources/walkthroughs/04-run-doctor.md"
+            },
+            "completionEvents": [
+              "onContext:fovux.walkthrough.doctorRan"
+            ]
           },
           {
             "id": "openDashboard",
             "title": "Open the Dashboard",
             "description": "View your runs, models, and exports.\n[Open Dashboard](command:fovux.openDashboard)",
-            "media": { "markdown": "resources/walkthroughs/05-open-dashboard.md" },
-            "completionEvents": ["onCommand:fovux.openDashboard"]
+            "media": {
+              "markdown": "resources/walkthroughs/05-open-dashboard.md"
+            },
+            "completionEvents": [
+              "onCommand:fovux.openDashboard"
+            ]
           },
           {
             "id": "inspectDataset",
             "title": "Inspect a Dataset",
             "description": "Validate your YOLO dataset.\n[Inspect Dataset](command:fovux.openDatasetInspector)",
-            "media": { "markdown": "resources/walkthroughs/06-inspect-dataset.md" },
-            "completionEvents": ["onCommand:fovux.openDatasetInspector"]
+            "media": {
+              "markdown": "resources/walkthroughs/06-inspect-dataset.md"
+            },
+            "completionEvents": [
+              "onCommand:fovux.openDatasetInspector"
+            ]
           }
         ]
       }

@@ -20,10 +20,7 @@ export class DoctorTreeProvider implements vscode.TreeDataProvider<DoctorCheck> 
   async refresh(): Promise<void> {
     try {
       const client = await ExtensionFovuxClient.create();
-      const result = await client.invokeTool<{ checks?: DoctorCheck[] }>(
-        "fovux_doctor",
-        {}
-      );
+      const result = await client.invokeTool<{ checks?: DoctorCheck[] }>("fovux_doctor", {});
       this.checks = result.checks ?? [];
     } catch {
       this.checks = [
@@ -42,14 +39,8 @@ export class DoctorTreeProvider implements vscode.TreeDataProvider<DoctorCheck> 
       element.status === "pass"
         ? new vscode.ThemeIcon("check", new vscode.ThemeColor("testing.iconPassed"))
         : element.status === "warn"
-          ? new vscode.ThemeIcon(
-              "warning",
-              new vscode.ThemeColor("testing.iconQueued")
-            )
-          : new vscode.ThemeIcon(
-              "error",
-              new vscode.ThemeColor("testing.iconFailed")
-            );
+          ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("testing.iconQueued"))
+          : new vscode.ThemeIcon("error", new vscode.ThemeColor("testing.iconFailed"));
 
     const item = new vscode.TreeItem(element.name);
     item.description = element.detail;

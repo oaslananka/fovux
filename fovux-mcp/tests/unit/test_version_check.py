@@ -6,15 +6,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CHECK_VERSIONS = REPO_ROOT / "scripts" / "check_versions.py"
 
 
 def test_check_versions_exits_zero() -> None:
     """When all version sources are consistent, the script exits 0."""
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(CHECK_VERSIONS)],
         capture_output=True,
         text=True,
@@ -57,7 +55,7 @@ def test_check_versions_detects_mismatch(tmp_path: Path) -> None:
     patched_script = tmp_path / "check_versions.py"
     patched_script.write_text(patched)
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(patched_script)],
         capture_output=True,
         text=True,
