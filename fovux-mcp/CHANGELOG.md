@@ -1,0 +1,110 @@
+# Changelog
+
+All notable changes to `fovux-mcp` are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project follows [Semantic Versioning](https://semver.org/).
+
+## [4.1.0] - 2026-04-27
+
+### Added
+
+- `/health` response now includes `service` field for cross-package identification.
+- JSON Schema export for every MCP tool input (37 schemas in `schemas/tools/`).
+- MCP Registry manifest (`server.json`) and Smithery manifest (`smithery.yaml`).
+- Tool documentation completeness gate: all 37 tools now have docs pages.
+- Real-server integration tests in CI.
+- Nightly compatibility job testing against latest upstream dependencies.
+- LLM input fuzzing via Hypothesis and explicit path-traversal security tests.
+- Cross-OS CI matrix covering Ubuntu, macOS, and Windows.
+
+### Changed
+
+- Version alignment: all version sources unified to `4.1.0` with CI enforcement via `scripts/check_versions.py`.
+- Removed committed build artifacts (htmlcov, coverage.xml, junit.xml) and hardened `.gitignore`.
+
+### Security
+
+- Sigstore signing and SLSA Level 3 provenance for wheel and sdist artifacts.
+- Tool input fuzzing covers path traversal, reserved characters, and oversized strings.
+
+## [3.0.0] - 2026-04-27
+
+### Added
+
+- new roadmap tools for dataset augmentation, visual model comparison, run archiving, ensemble inference, active learning, distillation, MLflow sync, and live training adjustment
+- structured `ErrorDetail` HTTP serialization and archived run metadata
+- expanded `fovux_doctor` checks for CUDA/CuDNN, disk capacity, AGPL notice, active runs, CPU/RAM snapshot, and requirements
+- contract, chaos, security, and public tool-boundary tests
+
+### Changed
+
+- `train_start` now supports `force` and `max_concurrent_runs`, writes PID atomically, rejects unsafe duplicate runs, and records spawn failures
+- SQLite run registry now enables WAL, normal synchronous mode, and foreign keys
+- HTTP tool invocation now applies per-tool rate limits
+- INT8 quantization validates calibration datasets before export
+- CI and local quality gates now enforce strict markers, timeout, 90% backend coverage, Bandit, and pip-audit
+
+### Fixed
+
+- worker termination now writes both `status.json` and registry terminal state
+- RTSP save validation requires explicit output path and reconnect attempts are configurable
+- raw library exceptions are wrapped at the tool boundary
+
+## [2.0.0] - 2026-04-22
+
+### Added
+
+- authenticated local HTTP transport with persisted bearer token and `rotate-token`
+- watch-based SSE streaming with `metrics.jsonl` as the preferred live metrics source
+- `/metrics` Prometheus-style endpoint behind an explicit `--metrics` flag
+- export history JSONL entries for ONNX, TFLite, and INT8 artifacts
+- `run_delete` and `run_tag` tools for Studio context actions
+- strict YOLO `data.yaml` validation before training and quantization
+- SPDX SBOM generation and release preflight scripts for Azure DevOps
+
+### Changed
+
+- training stores runtime PID in `pid.txt` instead of rewriting `params.json`
+- HTTP tool proxy runs blocking tools off the asyncio event loop
+- `model_list` scans known artifact locations instead of recursively walking entire run trees
+- output-writing tools now validate that artifacts stay in allowed local roots
+
+### Fixed
+
+- ONNX parity checks now compare raw model outputs and fail loudly on runtime errors
+- RTSP inference uses reconnect backoff, bounded queues, dynamic FPS, and no Pydantic mutation
+- dataset split math now guarantees split counts sum to the input size
+- YOLO/COCO conversion preserves splits and detects category conflicts
+
+### Security
+
+- token auth is required for every HTTP endpoint except `/health`
+- `data.yaml` parsing uses safe YAML rules and rejects unsafe tags/path escapes
+- release publish remains disabled unless maintainer-set manual gates are enabled
+
+## [1.0.0] - 2026-04-21
+
+### Added
+
+- structured logging via `core.logging` and tool lifecycle logging via `core.tooling`
+- safe local path validation and configurable file-size limits
+- HTTP metrics SSE at `GET /runs/{run_id}/metrics`
+- HTTP tool proxy at `POST /tools/{name}`
+- docs site expansion with per-tool pages, recipes, ADRs, and API reference
+- property-based tests, benchmark coverage, and slow E2E training scaffolding
+- Azure docs validation stage, optional slow validation stage, and SBOM generation
+
+### Changed
+
+- dataset tool format fallbacks now return explicit `FovuxDatasetFormatError` guidance
+- CLI and HTTP startup now use the shared structured logger
+- `train_status` exposes reusable metric parsing helpers for HTTP and Studio
+- run registry uses `NullPool` to avoid lingering SQLite connections in tooling and tests
+- Fovux Studio now bundles real React webviews for dashboard, dataset inspector, export wizard, and run comparison
+
+### Fixed
+
+- stale stderr logger binding under pytest capture
+- `run_compare` circular import with `train_status`
+- VS Code build output now emits `out/webviews/*/main.js` for packaged panels

@@ -1,0 +1,394 @@
+"""Tests for training tools: train_start, train_status, train_stop, train_resume."""
+
+from __future__ import annotations
+
+import inspect
+import json
+import os
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from fovux.core.errors import (
+    FovuxDatasetNotFoundError,
+    FovuxTrainingAlreadyRunningError,
+    FovuxTrainingRunNotFoundError,
+    FovuxTrainingSubprocessError,
+)
+from fovux.core.paths import FovuxPaths
+from fovux.core.runs import RunRegistry, get_registry
+from fovux.schemas.training import (
+    TrainResumeInput,
+    TrainStartInput,
+    TrainStatusInput,
+    TrainStopInput,
+)
+from fovux.tools.train_resume import _run_train_resume
+from fovux.tools.train_start import _run_train_start
+from fovux.tools.train_status import _pid_alive, _read_metrics, _run_train_status
+from fovux.tools.train_stop import _kill_pid, _run_train_stop
+
+FIXTURES = Path(__file__).parent.parent.parent / "fixtures"
+
+
+def _make_registry(tmp_path: Path) -> RunRegistry:
+    return RunRegistry(tmp_path / "runs.db")
+
+
+def _fake_popen(pid: int = 99999) -> MagicMock:
+    mock = MagicMock()
+    mock.pid = pid
+    return mock
+
+
+@pytest.fixture()
+def fake_fovux_home(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("FOVUX_HOME", str(tmp_path))
+    return tmp_path
+
+
+# ──────────────────────────────────────────────
+# train_start
+# ──────────────────────────────────────────────
+
+
+def test_train_start_returns_run_id(fake_fovux_home, tmp_path):
+    """train_start should return a run_id and status=running."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen()) as _mock:
+        out = _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+                model="yolov8n.pt",
+                epochs=1,
+            )
+        )
+    assert out.run_id
+    assert out.status == "running"
+    assert out.pid == 99999
+
+
+def test_train_start_missing_dataset_raises(fake_fovux_home):
+    """Should raise FovuxDatasetNotFoundError for nonexistent dataset."""
+    with pytest.raises(FovuxDatasetNotFoundError):
+        _run_train_start(TrainStartInput(dataset_path=Path("/no/such/dataset")))
+
+
+def test_train_start_writes_params_json(fake_fovux_home):
+    """params.json should be written to the run directory."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen()):
+        out = _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+                epochs=5,
+            )
+        )
+    params = json.loads((out.run_path / "params.json").read_text())
+    assert params["epochs"] == 5
+
+
+def test_train_start_custom_name(fake_fovux_home):
+    """Custom name should be used as run_id."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen()):
+        out = _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+                name="my_custom_run",
+            )
+        )
+    assert out.run_id == "my_custom_run"
+
+
+def test_train_start_rejects_existing_complete_run_without_force(fake_fovux_home):
+    """Existing completed runs should not be overwritten unless force=True."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen()):
+        out = _run_train_start(
+            TrainStartInput(dataset_path=FIXTURES / "mini_yolo", name="repeatable")
+        )
+    assert out.run_path == FovuxPaths(fake_fovux_home).runs / "repeatable"
+
+    registry = get_registry(FovuxPaths(fake_fovux_home).runs_db)
+    registry.update_status(out.run_id, "complete")
+    assert registry.get_run(out.run_id).status == "complete"  # type: ignore[union-attr]
+
+    with (
+        patch("fovux.tools.train_start.get_registry", return_value=registry),
+        pytest.raises(FovuxTrainingAlreadyRunningError, match="already exists"),
+    ):
+        retry_input = TrainStartInput(dataset_path=FIXTURES / "mini_yolo", name="repeatable")
+        assert retry_input.force is False
+        _run_train_start(retry_input)
+
+
+def test_train_start_force_overwrites_finished_run(fake_fovux_home):
+    """force=True should allow a stopped/failed/complete run name to be reused."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=100)):
+        out = _run_train_start(
+            TrainStartInput(dataset_path=FIXTURES / "mini_yolo", name="retryable")
+        )
+    (out.run_path / "metrics.jsonl").write_text('{"epoch": 1}\n', encoding="utf-8")
+
+    registry = get_registry(FovuxPaths(fake_fovux_home).runs_db)
+    registry.update_status(out.run_id, "failed")
+
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=101)):
+        forced = _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+                name="retryable",
+                force=True,
+            )
+        )
+
+    assert forced.run_id == "retryable"
+    assert forced.pid == 101
+    assert not (forced.run_path / "metrics.jsonl").exists()
+
+
+def test_train_start_enforces_max_concurrent_runs(fake_fovux_home):
+    """max_concurrent_runs should prevent accidentally saturating the host."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=100)):
+        _run_train_start(
+            TrainStartInput(dataset_path=FIXTURES / "mini_yolo", name="already_running")
+        )
+
+    with pytest.raises(FovuxTrainingAlreadyRunningError, match="concurrent"):
+        _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+                name="second_run",
+                max_concurrent_runs=1,
+            )
+        )
+
+
+def test_train_start_marks_failed_when_subprocess_spawn_fails(fake_fovux_home):
+    """Subprocess spawn failures should leave a failed registry row instead of a ghost run."""
+    with patch(
+        "fovux.tools.train_start.subprocess.Popen",
+        side_effect=OSError("python missing"),
+    ):
+        with pytest.raises(FovuxTrainingSubprocessError, match="python missing"):
+            _run_train_start(
+                TrainStartInput(dataset_path=FIXTURES / "mini_yolo", name="spawn_failure")
+            )
+
+    registry = get_registry(FovuxPaths(fake_fovux_home).runs_db)
+    record = registry.get_run("spawn_failure")
+    assert record is not None
+    assert record.status == "failed"
+
+
+def test_train_start_writes_json_pid_file_atomically(fake_fovux_home):
+    """pid.txt should contain a structured payload for robust future parsing."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=4567)):
+        out = _run_train_start(TrainStartInput(dataset_path=FIXTURES / "mini_yolo"))
+
+    assert json.loads((out.run_path / "pid.txt").read_text(encoding="utf-8")) == {"pid": 4567}
+
+
+def test_train_start_defaults_to_auto_device() -> None:
+    """TrainStartInput and train_start should default to automatic device selection."""
+    from fovux.tools.train_start import train_start
+
+    assert TrainStartInput(dataset_path=Path(".")).device == "auto"
+    assert inspect.signature(train_start).parameters["device"].default == "auto"
+    assert inspect.signature(train_start).parameters["force"].default is False
+    assert inspect.signature(train_start).parameters["max_concurrent_runs"].default == 1
+
+
+# ──────────────────────────────────────────────
+# train_status
+# ──────────────────────────────────────────────
+
+
+def test_train_status_unknown_run_raises(fake_fovux_home):
+    """Should raise FovuxTrainingRunNotFoundError for unknown run_id."""
+    with pytest.raises(FovuxTrainingRunNotFoundError):
+        _run_train_status(TrainStatusInput(run_id="does_not_exist"))
+
+
+def test_train_status_reflects_registry(fake_fovux_home):
+    """Status returned should match registry after launch."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=12345)):
+        start_out = _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+            )
+        )
+    with patch("fovux.tools.train_status._pid_alive", return_value=True):
+        status_out = _run_train_status(TrainStatusInput(run_id=start_out.run_id))
+    assert status_out.status == "running"
+    assert status_out.pid == 12345
+
+
+def test_train_status_detects_complete_when_pid_gone(fake_fovux_home):
+    """When pid is no longer alive and status.json says complete, status should be complete."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=1)):
+        start_out = _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+            )
+        )
+    # write a status.json indicating completion
+    (start_out.run_path / "status.json").write_text(json.dumps({"status": "complete"}))
+    with patch("fovux.tools.train_status._pid_alive", return_value=False):
+        status_out = _run_train_status(TrainStatusInput(run_id=start_out.run_id))
+    assert status_out.status == "complete"
+
+
+def test_read_metrics_from_results_csv(tmp_path):
+    """_read_metrics should parse epoch and mAP50 from results.csv."""
+    csv_content = "epoch,metrics/mAP50(B),metrics/mAP50-95(B)\n0,0.45,0.30\n1,0.52,0.35\n"
+    csv_path = tmp_path / "results.csv"
+    csv_path.write_text(csv_content)
+    epoch, map50 = _read_metrics(tmp_path)
+    assert epoch == 2
+    assert abs(map50 - 0.52) < 1e-6
+
+
+# ──────────────────────────────────────────────
+# train_stop
+# ──────────────────────────────────────────────
+
+
+def test_train_stop_unknown_run_raises(fake_fovux_home):
+    """Should raise FovuxTrainingRunNotFoundError for unknown run_id."""
+    with pytest.raises(FovuxTrainingRunNotFoundError):
+        _run_train_stop(TrainStopInput(run_id="ghost_run"))
+
+
+def test_train_stop_uses_cached_registry(fake_fovux_home):
+    """train_stop should use the shared process-local registry singleton."""
+    with (
+        patch("fovux.tools.train_stop.get_registry") as get_registry,
+        patch(
+            "fovux.tools.train_stop.RunRegistry",
+            side_effect=AssertionError("direct registry"),
+            create=True,
+        ),
+    ):
+        get_registry.return_value.get_run.return_value = None
+        with pytest.raises(FovuxTrainingRunNotFoundError):
+            _run_train_stop(TrainStopInput(run_id="ghost_run"))
+
+    get_registry.assert_called_once()
+
+
+def test_train_stop_updates_status(fake_fovux_home):
+    """train_stop should update registry status to stopped."""
+    with patch(
+        "fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=os.getpid())
+    ):
+        start_out = _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+            )
+        )
+    with patch("fovux.tools.train_stop._kill_pid", return_value="Signal sent."):
+        stop_out = _run_train_stop(TrainStopInput(run_id=start_out.run_id))
+    assert stop_out.status == "stopped"
+
+
+def test_train_stop_noop_when_not_running(fake_fovux_home):
+    """Stopping a non-running run should return its current status."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen()):
+        start_out = _run_train_start(
+            TrainStartInput(
+                dataset_path=FIXTURES / "mini_yolo",
+            )
+        )
+    with patch("fovux.tools.train_stop._kill_pid", return_value="done"):
+        _run_train_stop(TrainStopInput(run_id=start_out.run_id))
+        stop2 = _run_train_stop(TrainStopInput(run_id=start_out.run_id))
+    assert stop2.status == "stopped"
+    assert "not running" in stop2.message.lower()
+
+
+def test_train_resume_unknown_run_raises(fake_fovux_home):
+    """Resuming an unknown run should raise the training not found error."""
+    with pytest.raises(FovuxTrainingRunNotFoundError):
+        _run_train_resume(TrainResumeInput(run_id="ghost_run"))
+
+
+def test_train_resume_updates_params_and_status(fake_fovux_home):
+    """Resuming should persist the checkpoint path, new epoch count, and running status."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=11111)):
+        start_out = _run_train_start(TrainStartInput(dataset_path=FIXTURES / "mini_yolo"))
+
+    last_pt = start_out.run_path / "weights" / "last.pt"
+    last_pt.parent.mkdir(parents=True, exist_ok=True)
+    last_pt.write_bytes(b"weights")
+
+    with patch("fovux.tools.train_resume.subprocess.Popen", return_value=_fake_popen(pid=22222)):
+        resume_out = _run_train_resume(TrainResumeInput(run_id=start_out.run_id, epochs=9))
+
+    params = json.loads((start_out.run_path / "params.json").read_text())
+    assert resume_out.status == "running"
+    assert resume_out.pid == 22222
+    assert params["resume_checkpoint"] == str(last_pt)
+    assert params["epochs"] == 9
+
+
+def test_train_resume_falls_back_when_last_checkpoint_is_missing(fake_fovux_home):
+    """Runs without a last checkpoint should still resume with a null checkpoint field."""
+    with patch("fovux.tools.train_start.subprocess.Popen", return_value=_fake_popen(pid=11111)):
+        start_out = _run_train_start(TrainStartInput(dataset_path=FIXTURES / "mini_yolo"))
+
+    with patch("fovux.tools.train_resume.subprocess.Popen", return_value=_fake_popen(pid=33333)):
+        _run_train_resume(TrainResumeInput(run_id=start_out.run_id))
+
+    params = json.loads((start_out.run_path / "params.json").read_text())
+    assert params["resume_checkpoint"] is None
+
+
+# ──────────────────────────────────────────────
+# helpers
+# ──────────────────────────────────────────────
+
+
+def test_pid_alive_current_process():
+    """Current process PID should be alive."""
+    assert _pid_alive(os.getpid()) is True
+
+
+def test_pid_alive_bogus_pid():
+    """A very large bogus PID should not be alive."""
+    assert _pid_alive(2_000_000) is False
+
+
+def test_kill_pid_uses_sigterm(monkeypatch):
+    """POSIX stop requests should send SIGTERM when force is disabled."""
+    import signal
+
+    from fovux.tools import train_stop as train_stop_module
+
+    monkeypatch.setattr(train_stop_module.sys, "platform", "linux")
+    with patch.object(train_stop_module.os, "kill") as kill:
+        message = _kill_pid(321, force=False)
+
+    kill.assert_called_once_with(321, signal.SIGTERM)
+    assert "Signal sent" in message
+
+
+def test_kill_pid_uses_taskkill_on_windows(monkeypatch):
+    """Windows stop requests should delegate to taskkill and honor force mode."""
+    from fovux.tools import train_stop as train_stop_module
+
+    monkeypatch.setattr(train_stop_module.sys, "platform", "win32")
+    with patch.object(train_stop_module.subprocess, "run") as run:
+        message = _kill_pid(654, force=True)
+
+    run.assert_called_once_with(["taskkill", "/PID", "654", "/F"], capture_output=True, check=False)
+    assert "Signal sent" in message
+
+
+def test_kill_pid_handles_missing_process(monkeypatch):
+    """A missing process should return a descriptive noop message."""
+    from fovux.tools import train_stop as train_stop_module
+
+    monkeypatch.setattr(train_stop_module.sys, "platform", "linux")
+    with patch.object(train_stop_module.os, "kill", side_effect=ProcessLookupError):
+        message = _kill_pid(999, force=True)
+
+    assert "no longer exists" in message

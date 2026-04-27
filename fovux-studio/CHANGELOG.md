@@ -1,0 +1,86 @@
+# Changelog
+
+All notable changes to `fovux-studio` are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [4.1.0] - 2026-04-27
+
+### Added
+
+- 12 granular Language Model Tool registrations for Copilot agent mode and LLM hosts.
+- Cross-package compatibility enforcement with `FOVUX_COMPAT` version range checks.
+- First-run walkthrough (Getting Started) covering install, profile, server, doctor, dashboard, dataset.
+- System Health (Doctor) sidebar with live diagnostics tree view.
+- Privacy badge status bar item showing local-only operation.
+- `fovux.installBackend` and `fovux.runDoctor` commands for walkthrough steps.
+- VSIX bundle-size regression check in CI.
+
+### Changed
+
+- Version unified to `4.1.0` across the monorepo.
+- LM tool catalog surfaces granular tools first; generic dispatcher kept as fallback.
+- Status bar shows compatibility state (recommended, supported, incompatible).
+
+## [3.0.0] - 2026-04-27
+
+### Added
+
+- resilient SSE reconnect and multiline SSE parsing tests
+- Training Launcher run-name preflight, force overwrite, max-concurrency control, and user presets backed by `globalState`
+- run timeline and annotation editor webviews
+- export recommendations from benchmark latency and model size
+- embedded MCP client scaffold and VS Code Language Model Tool registration with user confirmation
+- multi-`FOVUX_HOME` profile settings
+
+### Changed
+
+- refresh command now updates runs, models, and exports
+- extension HTTP client retries once on 401 after rereading `auth.token`
+- dataset preview boxes now render through a reusable canvas layer
+- server startup errors now prioritize spawn failures over timeout text
+
+### Security
+
+- webview CSP remains centralized and covered by tests
+- Marketplace package build now includes the new timeline and annotation editor bundles
+
+## [2.0.0] - 2026-04-22
+
+### Added
+
+- Training Launcher webview for starting `train_start` runs from VS Code
+- Exports tree view backed by `FOVUX_HOME/exports.jsonl`
+- run context actions for stop, resume, delete, tag, copy ID, and reveal
+- authenticated webview requests using the shared `FOVUX_HOME/auth.token`
+
+### Changed
+
+- activation now uses `onView:*` plus `onStartupFinished`
+- extension-host HTTP client no longer owns long-lived metric streams
+- webview bundles include a dedicated training launcher entrypoint
+
+### Security
+
+- Studio sends bearer auth headers to every protected Fovux HTTP endpoint
+- publishing remains manual-gated through Azure DevOps release variables
+
+## [1.0.0] - 2026-04-21
+
+### Added
+
+- script-enabled React webviews for dashboard, dataset inspector, export wizard, and run comparison
+- browser-side HTTP/SSE client helpers for the local Studio transport
+- vitest smoke tests for extension activation, command registration, webview HTML bootstrapping, and run tree discovery
+- multi-entry `tsup` build producing `out/webviews/*/main.js`
+
+### Changed
+
+- command handlers now open real webviews instead of placeholder HTML
+- `pnpm test` now runs Vitest
+- ESLint configuration now supports TSX sources and test files
+
+### Fixed
+
+- compare-runs command no longer falls back to an informational toast
+- packaged webview entry paths now match the expected `main.js` layout

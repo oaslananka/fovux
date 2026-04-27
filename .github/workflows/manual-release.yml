@@ -1,0 +1,161 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to validate or publish, for example v2.0.0"
+        required: true
+        type: string
+      publish:
+        description: "Publish artifacts to registries"
+        required: true
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+      approval:
+        description: "Type APPROVE_RELEASE to allow publish=true"
+        required: false
+        type: string
+      target:
+        description: "Publish target"
+        required: true
+        default: "all"
+        type: choice
+        options: ["all", "pypi", "marketplace", "open-vsx"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Manual gated release
+    if: github.repository == 'oaslananka-lab/fovux'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: release
+    env:
+      DOPPLER_PROJECT: ${{ secrets.DOPPLER_PROJECT }}
+      DOPPLER_CONFIG: ${{ secrets.DOPPLER_CONFIG }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate manual gate
+        run: |
+          if [ "${{ inputs.publish }}" = "true" ] && [ "${{ inputs.approval }}" != "APPROVE_RELEASE" ]; then
+            echo "Publishing requires approval=APPROVE_RELEASE."
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Install tooling
+        run: |
+          python -m pip install uv build twine
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
+      - name: Verify release metadata
+        run: bash scripts/verify_release.sh "${{ inputs.version }}"
+
+      - name: Build artifacts
+        run: |
+          cd fovux-mcp
+          uv sync --locked --extra dev
+          uv run python -m build
+          cd ../fovux-studio
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm exec vsce package --out fovux-studio.vsix --no-dependencies
+
+      - name: Sign artifacts with Sigstore
+        if: inputs.publish == 'true'
+        uses: sigstore/gh-action-sigstore-python@v3
+        with:
+          inputs: >-
+            fovux-mcp/dist/*.whl
+            fovux-mcp/dist/*.tar.gz
+
+      - name: Install Doppler CLI
+        if: inputs.publish == 'true'
+        uses: dopplerhq/cli-action@v4
+
+      - name: Validate Doppler release secrets
+        if: inputs.publish == 'true'
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: bash scripts/verify_doppler_release_secrets.sh
+
+      - name: Publish to PyPI
+        if: inputs.publish == 'true' && (inputs.target == 'all' || inputs.target == 'pypi')
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler run \
+            --project "${DOPPLER_PROJECT:-all}" \
+            --config "${DOPPLER_CONFIG:-main}" \
+            -- bash -c 'twine upload fovux-mcp/dist/* --non-interactive -u __token__ -p "$PYPI_TOKEN"'
+
+      - name: Publish to VS Code Marketplace
+        if: inputs.publish == 'true' && (inputs.target == 'all' || inputs.target == 'marketplace')
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler run \
+            --project "${DOPPLER_PROJECT:-all}" \
+            --config "${DOPPLER_CONFIG:-main}" \
+            -- bash -c 'pnpm --dir fovux-studio exec vsce publish --packagePath fovux-studio.vsix --pat "$VSCE_PAT"'
+
+      - name: Publish to Open VSX
+        if: inputs.publish == 'true' && (inputs.target == 'all' || inputs.target == 'open-vsx')
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler run \
+            --project "${DOPPLER_PROJECT:-all}" \
+            --config "${DOPPLER_CONFIG:-main}" \
+            -- bash -c '
+              set -euo pipefail
+              cd fovux-studio
+              pnpm dlx ovsx create-namespace oaslananka --pat "$OVSX_PAT" || true
+              pnpm dlx ovsx publish fovux-studio.vsix --pat "$OVSX_PAT"
+            '
+      - name: Create GitHub Releases
+        if: inputs.publish == 'true'
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler run \
+            --project "${DOPPLER_PROJECT:-all}" \
+            --config "${DOPPLER_CONFIG:-main}" \
+            -- bash -c '
+              set -euo pipefail
+              export GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+              gh release create "${{ inputs.version }}" \
+                fovux-mcp/dist/* fovux-studio/fovux-studio.vsix \
+                --repo oaslananka-lab/fovux \
+                --title "Fovux ${{ inputs.version }}" \
+                --notes-file RELEASE_NOTES.md || \
+              gh release upload "${{ inputs.version }}" \
+                fovux-mcp/dist/* fovux-studio/fovux-studio.vsix \
+                --repo oaslananka-lab/fovux --clobber
+              
+              export GH_TOKEN="$DOPPLER_GITHUB_SERVICE_TOKEN"
+              gh release create "${{ inputs.version }}" \
+                fovux-mcp/dist/* fovux-studio/fovux-studio.vsix \
+                --repo oaslananka/fovux \
+                --title "Fovux ${{ inputs.version }}" \
+                --notes-file RELEASE_NOTES.md || \
+              gh release upload "${{ inputs.version }}" \
+                fovux-mcp/dist/* fovux-studio/fovux-studio.vsix \
+                --repo oaslananka/fovux --clobber
+            '
