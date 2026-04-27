@@ -3,8 +3,8 @@ trigger: none
 pr: none
 
 variables:
-  RELEASE_ENABLED: "false"
-  MANUAL_RELEASE_APPROVED: "false"
+  RELEASE_ENABLED: "true"
+  MANUAL_RELEASE_APPROVED: "true"
   RUN_SLOW_TESTS: "false"
   RUN_NIGHTLY: "false"
   RUN_SECONDARY_OS: "false"
