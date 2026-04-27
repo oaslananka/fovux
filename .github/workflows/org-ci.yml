@@ -83,7 +83,7 @@ jobs:
       - name: Contract test
         if: matrix.python-version == '3.13'
         working-directory: fovux-mcp
-        run: uv run pytest tests/contract -v
+        run: uv run pytest tests/contract -v --no-cov
 
       - name: Slow validation
         if: github.event_name == 'workflow_dispatch' && inputs.run_slow == 'true' && matrix.python-version == '3.13'
