@@ -79,7 +79,7 @@ jobs:
 
       - name: Sign artifacts with Sigstore
         if: inputs.publish == 'true'
-        uses: sigstore/gh-action-sigstore-python@v3
+        uses: sigstore/gh-action-sigstore-python@v3.3.0
         with:
           inputs: >-
             fovux-mcp/dist/*.whl
