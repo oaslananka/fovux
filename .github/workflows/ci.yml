@@ -42,7 +42,7 @@ jobs:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         if: hashFiles('fovux-mcp/pyproject.toml') != ''
         with:
           python-version: ${{ matrix.python-version }}
