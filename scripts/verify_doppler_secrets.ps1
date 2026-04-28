@@ -7,6 +7,11 @@ if (!(Test-Path ".doppler/secrets.txt")) {
     exit 1
 }
 
+if (-not $env:DOPPLER_TOKEN) {
+    Write-Error "DOPPLER_TOKEN is not set."
+    exit 1
+}
+
 $missing = @()
 Get-Content ".doppler/secrets.txt" | ForEach-Object {
     $line = $_.Trim()

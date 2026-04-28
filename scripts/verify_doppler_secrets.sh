@@ -7,6 +7,11 @@ if [ ! -f ".doppler/secrets.txt" ]; then
   echo ".doppler/secrets.txt not found." >&2; exit 1
 fi
 
+if [ -z "${DOPPLER_TOKEN:-}" ]; then
+  echo "DOPPLER_TOKEN is not set." >&2
+  exit 1
+fi
+
 missing=()
 while IFS= read -r line; do
   case "$line" in ""|\#*) continue ;; esac

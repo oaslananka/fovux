@@ -37,7 +37,6 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-
       - uses: arduino/setup-task@v2
         with:
           version: 3.x
@@ -71,11 +70,3 @@ jobs:
         uses: test-summary/action@v2
         with:
           paths: "**/junit.xml"
-
-      - name: Upload coverage
-        if: always() && hashFiles('**/coverage.xml', 'fovux-studio/coverage') != ''
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: fovux-mcp/coverage.xml
-          directory: fovux-studio/coverage

@@ -13,7 +13,6 @@ tasks:
         platforms: [linux, darwin, windows]
         ignore_error: false
       - cmd: cd fovux-studio && corepack enable && pnpm install --frozen-lockfile
-        ignore_error: true
 
   hooks:
     desc: Install git hooks
@@ -35,17 +34,15 @@ tasks:
     cmds:
       - cmd: cd fovux-mcp && uvx ruff check .
       - cmd: cd fovux-mcp && uvx ruff format --check .
-      - cmd: cd fovux-studio && pnpm run lint || true
-        ignore_error: true
+      - cmd: cd fovux-studio && pnpm run lint
       - cmd: actionlint || true
         ignore_error: true
 
   typecheck:
     desc: Static type checking
     cmds:
-      - cmd: cd fovux-mcp && uv run mypy --strict src tests
-      - cmd: cd fovux-studio && pnpm run typecheck || pnpm exec tsc --noEmit
-        ignore_error: true
+      - cmd: cd fovux-mcp && uv run mypy --strict --warn-unused-ignores src/fovux
+      - cmd: cd fovux-studio && pnpm run typecheck
 
   test:
     desc: Run unit tests
@@ -63,13 +60,17 @@ tasks:
     desc: Run tests with coverage
     cmds:
       - cmd: cd fovux-mcp && uv run pytest --cov=fovux --cov-report=term-missing --cov-report=xml
+      - cmd: cd fovux-studio && pnpm test
 
   security:
     desc: Security scans
     cmds:
-      - cmd: cd fovux-mcp && uvx bandit -r src -q
-      - cmd: cd fovux-mcp && uvx pip-audit
+      - cmd: cd fovux-mcp && uv run bandit -r src/fovux -ll
+      - cmd: cd fovux-mcp && uv export --no-dev --no-editable --no-hashes --output-file requirements-audit.txt
+      - cmd: cd fovux-mcp && uv run pip-audit --requirement requirements-audit.txt
+      - cmd: cd fovux-studio && pnpm audit --prod
       - cmd: gitleaks detect --no-banner --redact
+        ignore_error: true
 
   pre-push:
     desc: What pre-push hook runs (typecheck + fast tests + workflow lint)
@@ -79,7 +80,7 @@ tasks:
       - cmd: actionlint || true
 
   ci:
-    desc: Run the exact CI pipeline locally — full parity
+    desc: Run the exact CI pipeline locally - full parity
     cmds:
       - task: lint
       - task: typecheck
@@ -99,7 +100,7 @@ tasks:
   clean:
     desc: Remove build artifacts and caches
     cmds:
-      - cmd: rm -rf dist build .pytest_cache .mypy_cache .ruff_cache htmlcov coverage.xml junit.xml fovux-mcp/dist fovux-studio/*.vsix
+      - cmd: rm -rf dist build .pytest_cache .mypy_cache .ruff_cache htmlcov coverage.xml junit.xml fovux-mcp/dist fovux-mcp/build fovux-mcp/htmlcov fovux-mcp/coverage.xml fovux-mcp/junit.xml fovux-mcp/requirements-audit.txt fovux-studio/out fovux-studio/*.vsix
         platforms: [linux, darwin]
-      - cmd: powershell -Command "Remove-Item -Recurse -Force dist,build,.pytest_cache,.mypy_cache,.ruff_cache,htmlcov,coverage.xml,junit.xml,fovux-mcp/dist,fovux-studio/*.vsix -ErrorAction SilentlyContinue"
+      - cmd: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/clean.ps1
         platforms: [windows]

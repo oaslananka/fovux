@@ -2,7 +2,7 @@ name: Lock Threads
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 7 * * *"
   workflow_dispatch:
 
 permissions:
@@ -12,9 +12,10 @@ permissions:
 jobs:
   lock:
     if: github.repository == 'oaslananka-lab/fovux'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: dessant/lock-threads@v5
         with:
-          issue-inactive-days: '30'
-          pr-inactive-days: '30'
+          issue-inactive-days: 30
+          pr-inactive-days: 30
+          issue-lock-reason: "resolved"

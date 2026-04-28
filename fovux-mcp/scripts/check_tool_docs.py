@@ -6,7 +6,6 @@ Compares tool names from ``core/tool_registry._TOOL_SPECS`` against
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 

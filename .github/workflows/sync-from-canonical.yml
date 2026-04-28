@@ -37,17 +37,13 @@ jobs:
           git remote add canonical "https://x-access-token:${MIRROR_TOKEN}@github.com/oaslananka/fovux.git"
           git fetch canonical --prune --tags
 
-          # Replay every canonical branch into the org mirror
           for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/canonical | sed 's|^canonical/||'); do
             [ "$ref" = "HEAD" ] && continue
-            # Force-push canonical branch state to org mirror
             git push origin "refs/remotes/canonical/${ref}:refs/heads/${ref}" --force
           done
 
-          # Replay tags
           git push origin --tags --force
 
-          # Prune branches that no longer exist on canonical
           for org_branch in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
             short="${org_branch#origin/}"
             [ "$short" = "HEAD" ] && continue
