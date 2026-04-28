@@ -15,7 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4      - name: Generate report
+      - uses: actions/checkout@v4
+      - name: Generate report
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -58,4 +59,3 @@ jobs:
             gh issue create --repo "${{ github.repository }}" \
               --title "$title" --body "$body" --label "type:chore,status:triage"
           fi
-

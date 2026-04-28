@@ -34,7 +34,6 @@ gh api -X GET "/repos/${REPO_CANONICAL}/branches?per_page=100" --jq '.[].name' \
   | grep -Ev '^(main|master|develop|gh-pages)$' \
   | grep -Ev '^(release|hotfix)/' \
   | while read -r br; do
-      # Skip if open PR exists for this head branch
       open_count=$(gh pr list --repo "$REPO_CANONICAL" --head "$br" --state open --json number --jq 'length')
       [ "$open_count" -gt 0 ] && continue
 
@@ -74,13 +73,14 @@ gh pr list --repo "$REPO_CANONICAL" --state open --draft --limit 200 \
   --jq '.[] | select(.updatedAt < (now - 30*86400 | todate)) | "  #\(.number)  \(.title)  (last: \(.updatedAt))"' || true
 echo
 echo "Tags on canonical without a GitHub Release:"
-# Using gh api to get tags as git ls-remote might be restricted in this environment
-gh api -X GET "/repos/${REPO_CANONICAL}/tags?per_page=100" --jq '.[].name' | sort -u > /tmp/canonical_tags.txt
+git ls-remote --tags "https://github.com/${REPO_CANONICAL}.git" \
+  | awk '{print $2}' | sed 's|refs/tags/||' | grep -v '\^{}' | sort -u > /tmp/canonical_tags.txt
 gh release list --repo "$REPO_CANONICAL" --limit 200 --json tagName --jq '.[].tagName' | sort -u > /tmp/canonical_releases.txt
 comm -23 /tmp/canonical_tags.txt /tmp/canonical_releases.txt | sed 's/^/  /' || true
 echo
 echo "Tag mismatch (org has, canonical does not):"
-gh api -X GET "/repos/${REPO_ORG}/tags?per_page=100" --jq '.[].name' | sort -u > /tmp/org_tags.txt
+git ls-remote --tags "https://github.com/${REPO_ORG}.git" \
+  | awk '{print $2}' | sed 's|refs/tags/||' | grep -v '\^{}' | sort -u > /tmp/org_tags.txt
 comm -23 /tmp/org_tags.txt /tmp/canonical_tags.txt | sed 's/^/  /' || true
 
 echo

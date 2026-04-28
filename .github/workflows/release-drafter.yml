@@ -8,15 +8,16 @@ on:
     types: [opened, reopened, synchronize]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   update_release_draft:
-    if: github.repository == 'oaslananka-lab/fovux'
+    permissions:
+      contents: write  # for release-drafter/release-drafter to create a github release
+      pull-requests: write  # for release-drafter/release-drafter to add label to PR
     runs-on: ubuntu-latest
+    if: github.repository == 'oaslananka-lab/fovux'
     steps:
       - uses: release-drafter/release-drafter@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

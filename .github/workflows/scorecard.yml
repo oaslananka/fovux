@@ -1,23 +1,25 @@
 name: Scorecard supply-chain security
 on:
+  branch_protection_rule:
   schedule:
-    - cron: '0 6 * * 1'
+    - cron: '24 8 * * 2'
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [ "main" ]
 
-permissions:
-  contents: read
-  security-events: write
-  id-token: write
+permissions: read-all
 
 jobs:
   analysis:
     if: github.repository == 'oaslananka-lab/fovux'
+    name: Scorecard analysis
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4        with:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
           persist-credentials: false
 
       - name: "Run analysis"
@@ -30,12 +32,11 @@ jobs:
       - name: "Upload artifact"
         uses: actions/upload-artifact@v4
         with:
-          name: SARIF_file
+          name: SARIF file
           path: results.sarif
           retention-days: 5
 
       - name: "Upload to code-scanning"
-        uses: github/codeql-action/github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
-

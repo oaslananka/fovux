@@ -14,12 +14,6 @@ on:
       approval:
         description: Type APPROVE_RELEASE to confirm publish
         required: false
-      target:
-        description: "Publish target"
-        required: true
-        default: "all"
-        type: choice
-        options: ["all", "pypi", "marketplace", "open-vsx"]
 
 permissions:
   contents: write
@@ -37,7 +31,8 @@ jobs:
     timeout-minutes: 60
     environment: release
     steps:
-      - uses: actions/checkout@v4        with:
+      - uses: actions/checkout@v4
+        with:
           fetch-depth: 0
 
       - name: Validate approval
@@ -46,65 +41,57 @@ jobs:
             echo "Set approval=APPROVE_RELEASE to publish" >&2; exit 1
           fi
 
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v4
+
+      - name: Verify required Doppler secrets
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: bash scripts/verify_doppler_secrets.sh
+
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5        with:
-          enable-cache: true
+        if: hashFiles('fovux-mcp/pyproject.toml') != ''
+        uses: astral-sh/setup-uv@v5
 
       - name: Set up Node
-        uses: actions/setup-node@v4        with:
-          node-version-file: 'fovux-studio/package.json'
+        if: hashFiles('fovux-studio/package.json') != ''
+        uses: actions/setup-node@v4
+        with: { node-version-file: 'fovux-studio/package.json' }
 
-      - name: Install tooling
-        run: |
-          corepack enable
-          pnpm --dir fovux-studio install --frozen-lockfile
-
-      - name: Verify release metadata
-        run: bash scripts/verify_release.sh "${{ inputs.version }}"
-
-      # ---- Build ----
-      - name: Build (fovux-mcp)
+      - name: Build (Python)
+        if: hashFiles('fovux-mcp/pyproject.toml') != ''
         run: |
           cd fovux-mcp
           uv build
 
-      - name: Build (fovux-studio)
+      - name: Build (Node)
+        if: hashFiles('fovux-studio/package.json') != ''
         run: |
           cd fovux-studio
+          corepack enable
+          pnpm install --frozen-lockfile
           pnpm run build
-          pnpm run package -- --out fovux-studio.vsix
+          pnpm exec vsce package --out fovux-studio.vsix --no-dependencies
 
-      # ---- Sign + attest ----
       - name: Sigstore sign (Python)
-        if: inputs.publish == 'true'
-        uses: sigstore/gh-action-sigstore-python@v3        with:
+        if: hashFiles('fovux-mcp/dist/*.whl') != ''
+        uses: sigstore/gh-action-sigstore-python@v3
+        with:
           inputs: fovux-mcp/dist/*.whl fovux-mcp/dist/*.tar.gz
 
       - name: Build provenance attestation
         if: hashFiles('fovux-mcp/dist/*', 'fovux-studio/fovux-studio.vsix') != ''
-        uses: actions/attest-build-provenance@v2        with:
-          subject-path: |
-            fovux-mcp/dist/*
-            fovux-studio/fovux-studio.vsix
-
-      # ---- Publish ----
-      - name: Install Doppler CLI
-        if: inputs.publish == 'true'
-        uses: dopplerhq/cli-action@v4      - name: Verify required Doppler secrets
-        if: inputs.publish == 'true'
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: bash scripts/verify_doppler_secrets.sh
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'fovux-mcp/dist/* fovux-studio/fovux-studio.vsix'
 
       - name: Publish
         if: inputs.publish == 'true'
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-          PUBLISH_TARGET: ${{ inputs.target }}
         run: |
           doppler run --project all --config main -- bash scripts/publish.sh
 
-      # ---- GitHub release ----
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -118,12 +105,5 @@ jobs:
           fi
           assets=()
           if compgen -G "fovux-mcp/dist/*" > /dev/null; then assets+=(fovux-mcp/dist/*); fi
-          if compgen -G "fovux-studio/fovux-studio.vsix" > /dev/null; then assets+=(fovux-studio/fovux-studio.vsix); fi
+          if compgen -G "fovux-studio/*.vsix" > /dev/null; then assets+=(fovux-studio/*.vsix); fi
           gh release create "${{ inputs.version }}" "${gh_args[@]}" "${assets[@]}"
-
-          # Mirror release back to canonical if publishing
-          if [ "${{ inputs.publish }}" == "true" ] && [ -n "${DOPPLER_GITHUB_SERVICE_TOKEN:-}" ]; then
-             export GH_TOKEN="$DOPPLER_GITHUB_SERVICE_TOKEN"
-             gh release create "${{ inputs.version }}" "${gh_args[@]}" "${assets[@]}" --repo oaslananka/fovux
-          fi
-

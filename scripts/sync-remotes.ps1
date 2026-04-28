@@ -1,18 +1,25 @@
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = "Stop"
 
-# Setup remotes
-try {
-    git remote get-url lab | Out-Null
-} catch {
-    git remote add lab https://github.com/oaslananka-lab/fovux.git
+$repoCanonical = "git@github.com:oaslananka/fovux.git"
+$repoOrg = "git@github.com:oaslananka-lab/fovux.git"
+
+if (-not (git remote | Select-String -Pattern "^personal$")) {
+    git remote add personal $repoCanonical
 }
 
-Write-Host "Syncing to origin (canonical)..."
-git push origin --all
-git push origin --tags
+if (-not (git remote | Select-String -Pattern "^org$")) {
+    git remote add org $repoOrg
+}
 
-Write-Host "Syncing to lab (mirror)..."
-git push lab --all
-git push lab --tags
+git fetch --all
 
-Write-Host "Sync successful."
+$branch = git branch --show-current
+if (![string]::IsNullOrWhiteSpace($branch)) {
+    Write-Host "Pushing branch $branch to personal and org..."
+    git push personal $branch
+    git push org $branch
+}
+
+Write-Host "Pushing tags to personal and org..."
+git push personal --tags
+git push org --tags

@@ -13,7 +13,8 @@ jobs:
     if: github.repository == 'oaslananka-lab/fovux'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4      - uses: EndBug/label-sync@v2        with:
+      - uses: actions/checkout@v4
+      - uses: EndBug/label-sync@v2.3.3
+        with:
           config-file: .github/labels.yml
           delete-other-labels: false
-

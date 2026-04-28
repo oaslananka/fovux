@@ -1,17 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Setup remotes
-if ! git remote get-url lab >/dev/null 2>&1; then
-    git remote add lab https://github.com/oaslananka-lab/fovux.git
+REPO_CANONICAL="git@github.com:oaslananka/fovux.git"
+REPO_ORG="git@github.com:oaslananka-lab/fovux.git"
+
+if ! git remote get-url personal >/dev/null 2>&1; then
+    git remote add personal "$REPO_CANONICAL"
 fi
 
-echo "Syncing to origin (canonical)..."
-git push origin --all
-git push origin --tags
+if ! git remote get-url org >/dev/null 2>&1; then
+    git remote add org "$REPO_ORG"
+fi
 
-echo "Syncing to lab (mirror)..."
-git push lab --all
-git push lab --tags
+git fetch --all
 
-echo "Sync successful."
+BRANCH=$(git branch --show-current)
+if [ -n "$BRANCH" ]; then
+    echo "Pushing branch $BRANCH to personal and org..."
+    git push personal "$BRANCH"
+    git push org "$BRANCH"
+fi
+
+echo "Pushing tags to personal and org..."
+git push personal --tags
+git push org --tags

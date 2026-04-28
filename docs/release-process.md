@@ -1,24 +1,18 @@
-# Release process
+# Release Process
 
-Releases are semi-automated and must be triggered manually from the organizational repository.
+This repository automates the release process via `.github/workflows/release.yml`.
 
-## 1. Trigger release
+## How to trigger a release:
+1. Go to the Actions tab in GitHub.
+2. Select the `Release` workflow.
+3. Click `Run workflow`.
+4. Provide the `version` (e.g. `v1.2.3`).
+5. Select `true` for publish.
+6. Type `APPROVE_RELEASE` to confirm.
 
-1. Go to `oaslananka-lab/fovux` → Actions → **Release**.
-2. Click **Run workflow**.
-3. Fill in the version (e.g., `v4.1.0`).
-4. Set **Publish to registries** to `true` if you want to push to PyPI/npm/Marketplace.
-5. Set **Approval** to `APPROVE_RELEASE`.
-6. Click **Run workflow**.
+The release workflow is guarded and only runs in the `oaslananka-lab/fovux` repository to ensure safe access to publishing credentials via Doppler.
 
-## 2. What happens
-
-- The codebase is built for both `fovux-mcp` and `fovux-studio`.
-- Artifacts are signed with Sigstore.
-- Build provenance is attested.
-- If publish is `true`, artifacts are pushed to their respective registries.
-- A GitHub Release is created (or updated if it already exists as a draft).
-
-## 3. Release Notes
-
-Release notes are automatically drafted by **Release Drafter** when PRs are merged to `main`. The release workflow will use these notes to populate the GitHub Release body.
+## What flows automatically:
+- Artifacts are built for Fovux-mcp and Fovux-studio.
+- Provenance and Sigstore signing is added.
+- The workflow mirrors the release back to the canonical repository.

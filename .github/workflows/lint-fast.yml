@@ -17,8 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4      - name: actionlint
-        uses: raven-actions/actionlint@v2
+      - uses: actions/checkout@v4
+      - name: actionlint
+        uses: raven-actions/actionlint@v1.7.7
         with:
           fail-on-error: true
       - name: yamllint
@@ -27,32 +28,37 @@ jobs:
           yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .github/ || true
 
   python:
-    if: hashFiles('pyproject.toml', 'setup.py', '**/*.py') != ''
+    if: hashFiles('fovux-mcp/pyproject.toml') != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4      - uses: astral-sh/setup-uv@v5        with:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
           enable-cache: true
-      - run: uvx ruff check .
-      - run: uvx ruff format --check .
+      - run: |
+          cd fovux-mcp
+          uvx ruff check .
+          uvx ruff format --check .
 
   node:
-    if: hashFiles('package.json') != ''
+    if: hashFiles('fovux-studio/package.json') != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4      - uses: actions/setup-node@v4        with:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
           node-version-file: 'fovux-studio/package.json'
       - run: corepack enable
       - name: Detect package manager and install
         id: pm
         run: |
+          cd fovux-studio
           if [ -f pnpm-lock.yaml ]; then echo "cmd=pnpm" >> "$GITHUB_OUTPUT"
-          elif [ -f fovux-studio/pnpm-lock.yaml ]; then echo "cmd=pnpm" >> "$GITHUB_OUTPUT"
           elif [ -f yarn.lock ]; then echo "cmd=yarn" >> "$GITHUB_OUTPUT"
           else echo "cmd=npm" >> "$GITHUB_OUTPUT"; fi
-      - name: Install dependencies
-        run: |
+      - run: |
           cd fovux-studio
           ${{ steps.pm.outputs.cmd }} install --frozen-lockfile || ${{ steps.pm.outputs.cmd }} install
       - name: Lint (if defined)
@@ -63,4 +69,3 @@ jobs:
           else
             echo "No lint script; skipping."
           fi
-

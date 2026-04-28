@@ -1,52 +1,30 @@
-# Repository operations
+# Repository Operations
 
-This repository follows the **Dual-Owner Mirror** model for security and CI/CD efficiency.
+The canonical repository is `oaslananka/fovux`. The CI/CD mirror is `oaslananka-lab/fovux`.
 
-## Architecture
+## Dual-owner mirror model
 
-- **Canonical Repository:** `oaslananka/fovux`
-  - Primary entry point for maintainers and contributors.
-  - Contains code, issues, and PRs.
-  - Only lightweight linting runs here.
-- **Mirror Repository:** `oaslananka-lab/fovux`
-  - Dedicated runner for heavy CI, security scans, and releases.
-  - Automatically synchronized from canonical.
-  - Stores all secrets in Doppler.
+We use a dual-owner model for this repository:
+1. `oaslananka/fovux`: This is the public, canonical repository where developers open PRs, read code, and download releases.
+2. `oaslananka-lab/fovux`: This is a private or internal CI/CD runner mirror where heavy testing, scanning, releases, and scheduled maintenance run.
 
-## Synchronization
+## Auto-deleting merged branches
+The canonical repo is configured to automatically delete head branches upon merging.
 
-### Automatic
-Any push to `oaslananka/fovux` (all branches and tags) is automatically mirrored to `oaslananka-lab/fovux` via the `Mirror to org` workflow.
-
-### Manual recovery
-If the automatic mirror fails, maintainers can sync manually from a local machine using:
-
-```bash
-bash scripts/sync-remotes.sh
-```
-
-## Secret management
-Secrets are NOT stored in GitHub. They are fetched dynamically from Doppler at runtime. Maintainers should only manage secrets in the Doppler dashboard.
-
-## Repository hygiene
-
-### Automated branch deletion
-To keep the branch list clean, ensure the "Automatically delete head branches" setting is enabled in the canonical repository settings. If not enabled, a maintainer can enable it via CLI:
-
+If you ever need to manually configure it:
 ```bash
 gh api -X PATCH /repos/oaslananka/fovux -f delete_branch_on_merge=true
 ```
 
-### Manual cleanup script
-For periodic deep cleanup of stale local and remote branches, use the provided cleanup script:
-
+## Repository Hygiene
+To safely clean up old branches, run:
 ```bash
-# Dry-run to review what would be deleted
 bash scripts/repo-cleanup.sh
-
-# Apply deletions
+```
+This is a dry-run script. It will print the actions it would take. To execute, run:
+```bash
 bash scripts/repo-cleanup.sh --apply
 ```
 
-### Monthly hygiene report
-A monthly workflow runs in the lab repository to identify stale branches and old PRs, opening a tracking issue for maintainer review.
+## Syncing Remotes
+If the automated mirroring fails, you can sync manually using the `scripts/sync-remotes.sh` (or `.ps1`) script.

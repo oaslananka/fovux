@@ -19,7 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4        with:
+      - uses: actions/checkout@v4
+        with:
           fetch-depth: 0
           persist-credentials: false
 
@@ -30,4 +31,3 @@ jobs:
           set -euo pipefail
           git remote add org "https://x-access-token:${MIRROR_TOKEN}@github.com/oaslananka-lab/fovux.git"
           git push org --prune --force --tags "+refs/heads/*:refs/heads/*"
-
