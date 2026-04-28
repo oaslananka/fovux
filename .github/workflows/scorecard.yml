@@ -11,7 +11,7 @@ permissions: read-all
 
 jobs:
   analysis:
-    if: github.repository == 'oaslananka-lab/fovux'
+    if: github.repository == 'oaslananka-lab/fovux' && github.ref == 'refs/heads/main'
     name: Scorecard analysis
     runs-on: ubuntu-latest
     permissions:
