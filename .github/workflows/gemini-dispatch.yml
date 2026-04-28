@@ -24,8 +24,10 @@ defaults:
 
 jobs:
   debugger:
-    if: github.repository == 'oaslananka-lab/fovux' && (|-)
-      ${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}
+    if: |-
+      (github.repository == 'oaslananka-lab/fovux') && (
+        ${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}
+      )
     runs-on: 'ubuntu-latest'
     permissions:
       contents: 'read'
@@ -46,17 +48,19 @@ jobs:
     # For PRs: only if not from a fork
     # For issues: only on open/reopen
     # For comments: only if user types @gemini-cli and is OWNER/MEMBER/COLLABORATOR
-    if: github.repository == 'oaslananka-lab/fovux' && (|-)
-      (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.fork == false
-      ) || (
-        github.event_name == 'issues' &&
-        contains(fromJSON('["opened", "reopened"]'), github.event.action)
-      ) || (
-        github.event.sender.type == 'User' &&
-        startsWith(github.event.comment.body || github.event.review.body || github.event.issue.body, '@gemini-cli') &&
-        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association || github.event.issue.author_association)
+    if: |-
+      (github.repository == 'oaslananka-lab/fovux') && (
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.fork == false
+        ) || (
+          github.event_name == 'issues' &&
+          contains(fromJSON('["opened", "reopened"]'), github.event.action)
+        ) || (
+          github.event.sender.type == 'User' &&
+          startsWith(github.event.comment.body || github.event.review.body || github.event.issue.body, '@gemini-cli') &&
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association || github.event.issue.author_association)
+        )
       )
     runs-on: 'ubuntu-latest'
     permissions:
@@ -127,8 +131,10 @@ jobs:
 
   review:
     needs: 'dispatch'
-    if: github.repository == 'oaslananka-lab/fovux' && (|-)
-      ${{ needs.dispatch.outputs.command == 'review' }}
+    if: |-
+      (github.repository == 'oaslananka-lab/fovux') && (
+        ${{ needs.dispatch.outputs.command == 'review' }}
+      )
     uses: './.github/workflows/gemini-review.yml'
     permissions:
       contents: 'read'
@@ -141,8 +147,10 @@ jobs:
 
   triage:
     needs: 'dispatch'
-    if: github.repository == 'oaslananka-lab/fovux' && (|-)
-      ${{ needs.dispatch.outputs.command == 'triage' }}
+    if: |-
+      (github.repository == 'oaslananka-lab/fovux') && (
+        ${{ needs.dispatch.outputs.command == 'triage' }}
+      )
     uses: './.github/workflows/gemini-triage.yml'
     permissions:
       contents: 'read'
@@ -155,8 +163,10 @@ jobs:
 
   invoke:
     needs: 'dispatch'
-    if: github.repository == 'oaslananka-lab/fovux' && (|-)
-      ${{ needs.dispatch.outputs.command == 'invoke' }}
+    if: |-
+      (github.repository == 'oaslananka-lab/fovux') && (
+        ${{ needs.dispatch.outputs.command == 'invoke' }}
+      )
     uses: './.github/workflows/gemini-invoke.yml'
     permissions:
       contents: 'read'
@@ -169,8 +179,10 @@ jobs:
 
   plan-execute:
     needs: 'dispatch'
-    if: github.repository == 'oaslananka-lab/fovux' && (|-)
-      ${{ needs.dispatch.outputs.command == 'approve' }}
+    if: |-
+      (github.repository == 'oaslananka-lab/fovux') && (
+        ${{ needs.dispatch.outputs.command == 'approve' }}
+      )
     uses: './.github/workflows/gemini-plan-execute.yml'
     permissions:
       contents: 'write'
@@ -188,8 +200,10 @@ jobs:
       - 'triage'
       - 'invoke'
       - 'plan-execute'
-    if: github.repository == 'oaslananka-lab/fovux' && (|-)
-      ${{ always() && !cancelled() && (failure() || needs.dispatch.outputs.command == 'fallthrough') }}
+    if: |-
+      (github.repository == 'oaslananka-lab/fovux') && (
+        ${{ always() && !cancelled() && (failure() || needs.dispatch.outputs.command == 'fallthrough') }}
+      )
     runs-on: 'ubuntu-latest'
     permissions:
       contents: 'read'
