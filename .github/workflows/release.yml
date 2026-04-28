@@ -87,7 +87,7 @@ jobs:
 
       - name: Sigstore sign (Python)
         if: hashFiles('fovux-mcp/dist/*.whl') != ''
-        uses: sigstore/gh-action-sigstore-python@v3
+        uses: sigstore/gh-action-sigstore-python@v3.3.0
         with:
           inputs: fovux-mcp/dist/*.whl fovux-mcp/dist/*.tar.gz
 
