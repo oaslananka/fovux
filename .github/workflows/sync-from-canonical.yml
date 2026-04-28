@@ -41,17 +41,5 @@ jobs:
           git remote add canonical "${canonical_url}"
           git fetch canonical --prune --tags
 
-          for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/canonical | sed 's|^canonical/||'); do
-            [ "$ref" = "HEAD" ] && continue
-            git push origin "refs/remotes/canonical/${ref}:refs/heads/${ref}" --force
-          done
-
+          git push origin "refs/remotes/canonical/main:refs/heads/main" --force
           git push origin --tags --force
-
-          for org_branch in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
-            short="${org_branch#origin/}"
-            [ "$short" = "HEAD" ] && continue
-            if ! git show-ref --verify --quiet "refs/remotes/canonical/${short}"; then
-              git push origin --delete "$short" || true
-            fi
-          done
