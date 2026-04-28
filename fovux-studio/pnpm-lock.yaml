@@ -46,7 +46,7 @@ importers:
         version: 3.8.3
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(postcss@8.5.10)(typescript@5.9.3)
+        version: 8.5.1(postcss@8.5.12)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -137,10 +137,17 @@ packages:
       }
     engines: { node: ">=0.8.0" }
 
-  "@azure/msal-node@5.1.3":
+  "@azure/msal-common@16.5.2":
     resolution:
       {
-        integrity: sha512-LqT8mRZpEils9zGR9eW+Ljqifh2aMA99UF/X0jxIKDYZeHr6onlHwhVP4xHCeLhh55BI63JCbdf1iWJbMh1mPw==,
+        integrity: sha512-GkDEL6TYo3HgT3UuqakdgE9PZfc1hMki6+Hwgy1uddb/EauvAKfu85vVhuofRSo22D1xTnWt8Ucwfg4vSCVwvA==,
+      }
+    engines: { node: ">=0.8.0" }
+
+  "@azure/msal-node@5.1.5":
+    resolution:
+      {
+        integrity: sha512-ObTeMoNPmq19X3z40et9Xvs4ZoWVeJg43PZMRLG5iwVL+2nCtAerG3YTDItqPp1CfXNwmCXBbg8jn1DOx65c3g==,
       }
     engines: { node: ">=20" }
 
@@ -3605,10 +3612,10 @@ packages:
       yaml:
         optional: true
 
-  postcss@8.5.10:
+  postcss@8.5.12:
     resolution:
       {
-        integrity: sha512-pMMHxBOZKFU6HgAZ4eyGnwXF/EvPGGqUr0MnZ5+99485wwW41kW91A4LOGxSHhgugZmSChL5AlElNdwlNgcnLQ==,
+        integrity: sha512-W62t/Se6rA0Az3DfCL0AqJwXuKwBeYg6nOaIgzP+xZ7N5BFCI7DYi1qs6ygUYT6rvfi6t9k65UMLJC+PHZpDAA==,
       }
     engines: { node: ^10 || ^12 || >=14 }
 
@@ -4457,13 +4464,6 @@ packages:
         integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==,
       }
 
-  uuid@8.3.2:
-    resolution:
-      {
-        integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==,
-      }
-    hasBin: true
-
   validate-npm-package-license@3.0.4:
     resolution:
       {
@@ -4751,7 +4751,7 @@ snapshots:
       "@azure/core-util": 1.13.1
       "@azure/logger": 1.3.0
       "@azure/msal-browser": 5.7.0
-      "@azure/msal-node": 5.1.3
+      "@azure/msal-node": 5.1.5
       open: 10.2.0
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -4770,11 +4770,12 @@ snapshots:
 
   "@azure/msal-common@16.5.0": {}
 
-  "@azure/msal-node@5.1.3":
+  "@azure/msal-common@16.5.2": {}
+
+  "@azure/msal-node@5.1.5":
     dependencies:
-      "@azure/msal-common": 16.5.0
+      "@azure/msal-common": 16.5.2
       jsonwebtoken: 9.0.3
-      uuid: 8.3.2
 
   "@babel/code-frame@7.29.0":
     dependencies:
@@ -6872,13 +6873,13 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss-load-config@6.0.1(postcss@8.5.10):
+  postcss-load-config@6.0.1(postcss@8.5.12):
     dependencies:
       lilconfig: 3.1.3
     optionalDependencies:
-      postcss: 8.5.10
+      postcss: 8.5.12
 
-  postcss@8.5.10:
+  postcss@8.5.12:
     dependencies:
       nanoid: 3.3.11
       picocolors: 1.1.1
@@ -7384,7 +7385,7 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tsup@8.5.1(postcss@8.5.10)(typescript@5.9.3):
+  tsup@8.5.1(postcss@8.5.12)(typescript@5.9.3):
     dependencies:
       bundle-require: 5.1.0(esbuild@0.27.7)
       cac: 6.7.14
@@ -7395,7 +7396,7 @@ snapshots:
       fix-dts-default-cjs-exports: 1.0.1
       joycon: 3.1.1
       picocolors: 1.1.1
-      postcss-load-config: 6.0.1(postcss@8.5.10)
+      postcss-load-config: 6.0.1(postcss@8.5.12)
       resolve-from: 5.0.0
       rollup: 4.60.2
       source-map: 0.7.6
@@ -7404,7 +7405,7 @@ snapshots:
       tinyglobby: 0.2.16
       tree-kill: 1.2.2
     optionalDependencies:
-      postcss: 8.5.10
+      postcss: 8.5.12
       typescript: 5.9.3
     transitivePeerDependencies:
       - jiti
@@ -7498,8 +7499,6 @@ snapshots:
   util-deprecate@1.0.2:
     optional: true
 
-  uuid@8.3.2: {}
-
   validate-npm-package-license@3.0.4:
     dependencies:
       spdx-correct: 3.2.0
@@ -7511,7 +7510,7 @@ snapshots:
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
-      postcss: 8.5.10
+      postcss: 8.5.12
       rolldown: 1.0.0-rc.16
       tinyglobby: 0.2.16
     optionalDependencies:

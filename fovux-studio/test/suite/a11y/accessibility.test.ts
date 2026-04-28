@@ -65,9 +65,21 @@ function hasVisibleButtonText(source: string, buttonStart: number): boolean {
   if (close === -1) {
     return false;
   }
-  const body = source
-    .slice(buttonStart, close)
-    .replace(/<[^>]+>/g, "")
-    .trim();
-  return /\w/.test(body);
+  let visibleText = "";
+  let insideTag = false;
+  for (const char of source.slice(buttonStart, close)) {
+    if (char === "<") {
+      insideTag = true;
+      continue;
+    }
+    if (char === ">") {
+      insideTag = false;
+      visibleText += " ";
+      continue;
+    }
+    if (!insideTag) {
+      visibleText += char;
+    }
+  }
+  return /\w/.test(visibleText.trim());
 }
