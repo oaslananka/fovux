@@ -855,7 +855,7 @@
     "check:bundle-size": "node scripts/check-bundle-size.js"
   },
   "devDependencies": {
-    "@types/node": "^22.19.17",
+    "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/vscode": "1.98.0",
