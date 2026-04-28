@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_slow:
+        description: "Run slow backend validation"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+  schedule:
+    - cron: "17 2 * * *"
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-ci:
+    if: github.repository == 'oaslananka-lab/fovux'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4      - name: Set up uv
+        uses: astral-sh/setup-uv@v5        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          cd fovux-mcp
+          uv sync --extra dev
+
+      - name: Version coherence check
+        run: python scripts/check_versions.py
+
+      - name: Typecheck
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        run: |
+          cd fovux-mcp
+          uv run mypy src/fovux
+
+      - name: Test
+        run: |
+          cd fovux-mcp
+          uv run pytest
+
+      - name: Security scan (bandit + pip-audit)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        run: |
+          cd fovux-mcp
+          uv run ruff check . --select S
+          uv export --no-dev --no-editable --no-hashes --output-file requirements-audit.txt
+          uv run pip-audit --requirement requirements-audit.txt
+
+      - name: Slow validation
+        if: github.event_name == 'workflow_dispatch' && inputs.run_slow == 'true' && matrix.python-version == '3.13'
+        run: |
+          cd fovux-mcp
+          uv run pytest tests -m slow
+
+      - name: Publish test results
+        if: always() && hashFiles('fovux-mcp/junit.xml') != ''
+        uses: EnricoMi/publish-unit-test-result-action@v2        with:
+          files: fovux-mcp/junit.xml
+
+      - name: Test summary
+        if: always() && hashFiles('fovux-mcp/junit.xml') != ''
+        uses: test-summary/action@v2
+        with:
+          paths: fovux-mcp/junit.xml
+
+      - name: Upload coverage
+        if: always() && hashFiles('fovux-mcp/coverage.xml') != ''
+        uses: codecov/codecov-action@v5        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: fovux-mcp/coverage.xml
+          flags: python
+
+      - name: Install Doppler CLI
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: dopplerhq/cli-action@v4      - name: Notify Jules on failure
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler run --project all --config main -- bash -c '
+            curl -fsSL -X POST https://jules.googleapis.com/v1alpha/sessions \
+              -H "x-goog-api-key: $JULES_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"prompt\": \"CI job ${{ github.job }} failed on ${{ github.ref_name }}. Run: ${{ github.run_id }}. Diagnose root cause, fix, open PR.\",
+                \"sourceContext\": {\"source\": \"sources/github/${{ github.repository }}\"},
+                \"automationMode\": \"AUTO_CREATE_PR\",
+                \"title\": \"ci-fix: ${{ github.job }}\"
+              }"
+          '
+
+  node-ci:
+    if: github.repository == 'oaslananka-lab/fovux'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4      - name: Set up Node
+        uses: actions/setup-node@v4        with:
+          node-version-file: 'fovux-studio/package.json'
+
+      - run: corepack enable
+
+      - name: Install dependencies
+        run: |
+          cd fovux-studio
+          pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: |
+          cd fovux-studio
+          pnpm run typecheck
+
+      - name: Test
+        run: |
+          cd fovux-studio
+          xvfb-run pnpm run test
+
+      - name: Build
+        run: |
+          cd fovux-studio
+          pnpm run build
+
+      - name: Upload coverage
+        if: always()
+        uses: codecov/codecov-action@v5        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: fovux-studio/coverage
+          flags: node
+

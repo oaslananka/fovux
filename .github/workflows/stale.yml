@@ -1,9 +1,8 @@
-name: Stale Issues
+name: Close stale issues and PRs
 
 on:
   schedule:
-    - cron: "0 6 * * *"
-  workflow_dispatch:
+    - cron: '30 1 * * *'
 
 permissions:
   issues: write
@@ -12,18 +11,14 @@ permissions:
 jobs:
   stale:
     if: github.repository == 'oaslananka-lab/fovux'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/stale@v9
         with:
+          stale-issue-message: 'This issue is stale because it has been open 60 days with no activity. Remove stale label or comment or this will be closed in 14 days.'
+          stale-pr-message: 'This PR is stale because it has been open 60 days with no activity. Remove stale label or comment or this will be closed in 14 days.'
           days-before-stale: 60
           days-before-close: 14
-          stale-issue-message: >-
-            This issue has been automatically marked as stale because it has
-            not had activity in the last 60 days. It will be closed in 14 days
-            if no further activity occurs.
-          stale-pr-message: >-
-            This PR has been automatically marked as stale because it has not
-            had activity in the last 60 days.
-          exempt-issue-labels: "priority:p0,pinned,security"
-          exempt-pr-labels: "priority:p0,pinned,security"
+          exempt-issue-labels: 'pinned,priority:p0,security'
+          exempt-pr-labels: 'pinned,priority:p0,security'
+

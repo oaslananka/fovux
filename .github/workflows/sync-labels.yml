@@ -1,9 +1,8 @@
-name: Sync Labels
-
+name: Sync labels
 on:
   push:
     branches: [main]
-    paths: [.github/labels.yml]
+    paths: ['.github/labels.yml']
   workflow_dispatch:
 
 permissions:
@@ -12,13 +11,9 @@ permissions:
 jobs:
   sync:
     if: github.repository == 'oaslananka-lab/fovux'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Sync labels
-        uses: EndBug/label-sync@v2
-        with:
+      - uses: actions/checkout@v4      - uses: EndBug/label-sync@v2        with:
           config-file: .github/labels.yml
           delete-other-labels: false
+

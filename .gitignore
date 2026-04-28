@@ -17,6 +17,14 @@ Thumbs.db
 .mypy_cache/
 .ruff_cache/
 
+# Agent-local notes; never commit these
+reports/autonomy_setup/
+reports/phase*/
+.agent/
+.agent-reports/
+AUTONOMY_RESULT.md
+SETUP_LOG.md
+
 # fovux-mcp build artifacts
 fovux-mcp/dist/
 fovux-mcp/build/
@@ -38,3 +46,31 @@ fovux-studio/out/
 fovux-studio/*.vsix
 fovux-studio/coverage/
 fovux-studio/.vscode-test/
+.vscode/settings.json
+
+# Build artifacts (global)
+dist/
+build/
+out/
+*.vsix
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+coverage.xml
+junit.xml
+test-results.xml
+*.tsbuildinfo
+.vscode-test/
+
+# SBOMs and audit outputs (regenerated in CI)
+sbom.cdx.json
+sbom.spdx
+requirements-audit.txt
+requirements-build.txt
+.scan-results/
+
+.gemini/
+gha-creds-*.json

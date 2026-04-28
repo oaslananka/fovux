@@ -19,3 +19,4 @@ jobs:
     with:
       base64-subjects-as-file: true
       upload-assets: true
+

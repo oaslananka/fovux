@@ -1,0 +1,29 @@
+name: Jules review Dependabot
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  review:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: dopplerhq/cli-action@v4      - env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler run --project all --config main -- bash -c '
+            curl -fsSL -X POST https://jules.googleapis.com/v1alpha/sessions \
+              -H "x-goog-api-key: $JULES_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"prompt\": \"Review Dependabot PR #${{ github.event.pull_request.number }}. Decide: SAFE_TO_MERGE or NEEDS_REVIEW with a one-paragraph reason. Add a single PR comment with the verdict.\",
+                \"sourceContext\": {\"source\": \"sources/github/${{ github.repository }}\"},
+                \"title\": \"dependabot review: PR #${{ github.event.pull_request.number }}\"
+              }"
+          '
+

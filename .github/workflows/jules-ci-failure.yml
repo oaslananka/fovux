@@ -1,0 +1,33 @@
+name: Jules CI failure
+
+on:
+  workflow_run:
+    workflows: ["CI", "Org CI/CD"]
+    types: [completed]
+
+permissions:
+  actions: read
+
+jobs:
+  trigger:
+    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v4      - name: Trigger Jules session
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler run --project all --config main -- bash -c '
+            curl -fsSL -X POST https://jules.googleapis.com/v1alpha/sessions \
+              -H "x-goog-api-key: $JULES_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"prompt\": \"CI workflow ${{ github.event.workflow_run.name }} failed on main. Run: ${{ github.event.workflow_run.id }}. Diagnose root cause, fix, open PR.\",
+                \"sourceContext\": {\"source\": \"sources/github/${{ github.repository }}\"},
+                \"automationMode\": \"AUTO_CREATE_PR\",
+                \"title\": \"ci-fix: ${{ github.event.workflow_run.name }}\"
+              }"
+          '
+

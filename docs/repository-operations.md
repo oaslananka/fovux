@@ -1,101 +1,52 @@
-# Repository Operations
+# Repository operations
 
-Fovux uses a dual-GitHub layout:
+This repository follows the **Dual-Owner Mirror** model for security and CI/CD efficiency.
 
-- Canonical source repository: `https://github.com/oaslananka/fovux`
-- CI/CD mirror repository: `https://github.com/oaslananka-lab/fovux`
+## Architecture
 
-The canonical repository remains the public product home. The organization mirror is where automatic
-GitHub Actions CI runs on push and pull request. Azure DevOps and GitLab remain manual validation
-paths.
+- **Canonical Repository:** `oaslananka/fovux`
+  - Primary entry point for maintainers and contributors.
+  - Contains code, issues, and PRs.
+  - Only lightweight linting runs here.
+- **Mirror Repository:** `oaslananka-lab/fovux`
+  - Dedicated runner for heavy CI, security scans, and releases.
+  - Automatically synchronized from canonical.
+  - Stores all secrets in Doppler.
 
-## Remote Layout
+## Synchronization
 
-Use these remotes locally:
+### Automatic
+Any push to `oaslananka/fovux` (all branches and tags) is automatically mirrored to `oaslananka-lab/fovux` via the `Mirror to org` workflow.
 
-```bash
-git remote add github git@github.com:oaslananka/fovux.git
-git remote add org git@github.com:oaslananka-lab/fovux.git
-```
-
-The existing Azure remote may stay configured as:
-
-```bash
-git remote add azure git@ssh.dev.azure.com:v3/oaslananka/open-source/fovux
-```
-
-GitLab is optional and should be added by the maintainer when the mirror exists:
+### Manual recovery
+If the automatic mirror fails, maintainers can sync manually from a local machine using:
 
 ```bash
-git remote add gitlab <gitlab-ssh-url>
+bash scripts/sync-remotes.sh
 ```
 
-## Syncing Source
+## Secret management
+Secrets are NOT stored in GitHub. They are fetched dynamically from Doppler at runtime. Maintainers should only manage secrets in the Doppler dashboard.
 
-After a green local validation and commit, push source to both GitHub repositories:
+## Repository hygiene
+
+### Automated branch deletion
+To keep the branch list clean, ensure the "Automatically delete head branches" setting is enabled in the canonical repository settings. If not enabled, a maintainer can enable it via CLI:
 
 ```bash
-git push github main
-git push org main
+gh api -X PATCH /repos/oaslananka/fovux -f delete_branch_on_merge=true
 ```
 
-The helper scripts can also sync the GitHub remotes and optionally include manual mirrors:
-
-```powershell
-./scripts/sync-remotes.ps1 -Branch main
-./scripts/sync-remotes.ps1 -Branch main -IncludeAzure -IncludeGitLab
-```
+### Manual cleanup script
+For periodic deep cleanup of stale local and remote branches, use the provided cleanup script:
 
 ```bash
-./scripts/sync-remotes.sh main
-INCLUDE_AZURE=true INCLUDE_GITLAB=true ./scripts/sync-remotes.sh main
+# Dry-run to review what would be deleted
+bash scripts/repo-cleanup.sh
+
+# Apply deletions
+bash scripts/repo-cleanup.sh --apply
 ```
 
-## CI/CD Ownership
-
-`org-ci.yml` has push and pull request triggers, but jobs are owner-gated:
-
-- `oaslananka-lab/fovux`: push and pull request CI run automatically.
-- `oaslananka/fovux`: automatic jobs are skipped; maintainers can still use manual
-  `workflow_dispatch` when needed.
-
-This keeps the personal repository as the canonical source while making the organization repository
-the normal CI/CD execution point.
-
-Azure DevOps is manual-only. The root `azure-pipelines.yml` has `trigger: none` and `pr: none`.
-
-GitLab is manual-only. The root `.gitlab-ci.yml` only creates pipelines from the GitLab web UI.
-
-## Release Gate
-
-Release publication is manual-gated. The manual GitHub release workflow accepts both
-`oaslananka/fovux` and `oaslananka-lab/fovux`, validates version metadata, builds the Python and VSIX
-artifacts, and publishes only when:
-
-- `publish=true`
-- `approval=APPROVE_RELEASE`
-- required Doppler release secrets are available
-
-## Doppler Secrets
-
-Release workflows do not read registry tokens directly from GitHub, Azure, or GitLab secrets.
-Instead, the CI system stores only Doppler access metadata:
-
-```text
-DOPPLER_TOKEN
-DOPPLER_PROJECT
-DOPPLER_CONFIG
-```
-
-`DOPPLER_PROJECT` defaults to `all` and `DOPPLER_CONFIG` defaults to `main` when omitted. The selected
-Doppler config must contain these release secrets:
-
-```text
-PYPI_TOKEN
-VSCE_PAT
-OVSX_PAT
-```
-
-The manual GitHub release workflow installs the Doppler CLI only for `publish=true`, validates those
-required keys with `scripts/verify_doppler_release_secrets.sh`, and then runs each publish command
-inside `doppler run`. Normal CI jobs do not receive registry tokens.
+### Monthly hygiene report
+A monthly workflow runs in the lab repository to identify stale branches and old PRs, opening a tracking issue for maintainer review.

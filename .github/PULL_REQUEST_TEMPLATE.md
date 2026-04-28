@@ -1,20 +1,30 @@
 ## Summary
 
-Describe what changed and why.
+<!-- What changed and why -->
 
-## Linked Issue
+## Linked issue
 
 Closes #
 
-## Test Plan
+## Type of change
 
-- [ ] `python scripts/quality_gate.py repo-check`
-- [ ] `python scripts/quality_gate.py repo-verify`
-- [ ] Manual validation, if applicable:
+- [ ] type:bug
+- [ ] type:feature
+- [ ] type:docs
+- [ ] type:refactor
+- [ ] type:perf
+- [ ] type:security
+- [ ] type:chore
+- [ ] breaking
+
+## Test evidence
+
+<!-- Commands run + brief result -->
 
 ## Checklist
 
-- [ ] I updated docs or release notes when user-facing behavior changed.
-- [ ] I added or updated tests for behavior changes.
-- [ ] I did not commit generated build artifacts or secrets.
-- [ ] I verified local checks match CI expectations.
+- [ ] Tests pass locally
+- [ ] Lint and typecheck pass
+- [ ] CHANGELOG entry (if user-visible)
+- [ ] Docs updated (if user-visible)
+- [ ] No new committed secrets or build artifacts
