@@ -40,6 +40,12 @@ jobs:
       - uses: arduino/setup-task@v2
         with:
           version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        if: hashFiles('fovux-mcp/pyproject.toml') != ''
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - uses: astral-sh/setup-uv@v5
         if: hashFiles('fovux-mcp/pyproject.toml') != ''
@@ -58,7 +64,7 @@ jobs:
         run: task ci
 
       - name: Publish test results
-        if: always() && hashFiles('**/junit.xml', '**/test-results.xml') != ''
+        if: always() && runner.os == 'Linux' && hashFiles('**/junit.xml', '**/test-results.xml') != ''
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: |

@@ -9,10 +9,12 @@ tasks:
   install:
     desc: Install all dev dependencies
     cmds:
-      - cmd: cd fovux-mcp && uv sync --all-extras --dev
+      - cmd: cd fovux-mcp && uv sync --extra dev
         platforms: [linux, darwin, windows]
         ignore_error: false
-      - cmd: cd fovux-studio && corepack enable && pnpm install --frozen-lockfile
+      - cmd: corepack enable
+        ignore_error: true
+      - cmd: cd fovux-studio && pnpm install --frozen-lockfile
 
   hooks:
     desc: Install git hooks
