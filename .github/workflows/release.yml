@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 60
     environment: release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -127,6 +127,14 @@ jobs:
           if [ -f "sbom.spdx.json" ]; then assets+=(sbom.spdx.json); fi
           if gh release view "${{ inputs.version }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release upload "${{ inputs.version }}" --repo "${{ github.repository }}" "${assets[@]}" --clobber
+            if [ "${{ inputs.publish }}" = "true" ]; then
+              gh release edit "${{ inputs.version }}" \
+                --repo "${{ github.repository }}" \
+                --draft=false \
+                --latest \
+                --verify-tag \
+                --target "${GITHUB_SHA}"
+            fi
           else
             gh release create "${{ inputs.version }}" "${gh_args[@]}" "${assets[@]}"
           fi
