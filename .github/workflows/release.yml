@@ -93,13 +93,13 @@ jobs:
 
       - name: Build provenance attestation (Python)
         if: hashFiles('fovux-mcp/dist/*') != ''
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "fovux-mcp/dist/*"
 
       - name: Build provenance attestation (Node)
         if: hashFiles('fovux-studio/*.vsix') != ''
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: "fovux-studio/*.vsix"
 
