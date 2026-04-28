@@ -1,8 +1,5 @@
 # Jules Runbook
 
-The repository is equipped to automatically trigger Jules on labeled issues (e.g. `type:bug`).
+The repository automatically triggers the autonomous agent Jules to resolve issues labeled with `type:bug`, `type:docs`, `type:refactor`, or `good first issue`, if configured.
 
-To enable this:
-1. Ensure the Jules REST API is set up.
-2. Add the `JULES_API_KEY` to the `.doppler/secrets.txt` and Doppler dashboard for the `all/main` configuration.
-3. Fovux `ci.yml` is already using Jules for failure diagnostics.
+Make sure `JULES_API_KEY` is added to Doppler if you wish to use this integration.

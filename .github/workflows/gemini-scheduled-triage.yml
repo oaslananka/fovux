@@ -90,7 +90,7 @@ jobs:
 
       - name: 'Run Gemini Issue Analysis'
         id: 'gemini_issue_analysis'
-        if: |-
+        if: github.repository == 'oaslananka-lab/fovux' && (|-)
           ${{ steps.find_issues.outputs.issues_to_triage != '[]' }}
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         env:
@@ -139,7 +139,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     needs:
       - 'triage'
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       needs.triage.outputs.available_labels != '' &&
       needs.triage.outputs.available_labels != '[]' &&
       needs.triage.outputs.triaged_issues != '' &&

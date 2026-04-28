@@ -24,7 +24,7 @@ defaults:
 
 jobs:
   debugger:
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       ${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}
     runs-on: 'ubuntu-latest'
     permissions:
@@ -46,7 +46,7 @@ jobs:
     # For PRs: only if not from a fork
     # For issues: only on open/reopen
     # For comments: only if user types @gemini-cli and is OWNER/MEMBER/COLLABORATOR
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       (
         github.event_name == 'pull_request' &&
         github.event.pull_request.head.repo.fork == false
@@ -127,7 +127,7 @@ jobs:
 
   review:
     needs: 'dispatch'
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       ${{ needs.dispatch.outputs.command == 'review' }}
     uses: './.github/workflows/gemini-review.yml'
     permissions:
@@ -141,7 +141,7 @@ jobs:
 
   triage:
     needs: 'dispatch'
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       ${{ needs.dispatch.outputs.command == 'triage' }}
     uses: './.github/workflows/gemini-triage.yml'
     permissions:
@@ -155,7 +155,7 @@ jobs:
 
   invoke:
     needs: 'dispatch'
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       ${{ needs.dispatch.outputs.command == 'invoke' }}
     uses: './.github/workflows/gemini-invoke.yml'
     permissions:
@@ -169,7 +169,7 @@ jobs:
 
   plan-execute:
     needs: 'dispatch'
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       ${{ needs.dispatch.outputs.command == 'approve' }}
     uses: './.github/workflows/gemini-plan-execute.yml'
     permissions:
@@ -188,7 +188,7 @@ jobs:
       - 'triage'
       - 'invoke'
       - 'plan-execute'
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       ${{ always() && !cancelled() && (failure() || needs.dispatch.outputs.command == 'fallthrough') }}
     runs-on: 'ubuntu-latest'
     permissions:

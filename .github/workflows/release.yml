@@ -50,28 +50,22 @@ jobs:
         run: bash scripts/verify_doppler_secrets.sh
 
       - name: Set up uv
-        if: hashFiles('fovux-mcp/pyproject.toml') != ''
         uses: astral-sh/setup-uv@v5
-
-      - name: Set up Node
-        if: hashFiles('fovux-studio/package.json') != ''
-        uses: actions/setup-node@v4
-        with: { node-version-file: 'fovux-studio/package.json' }
-
       - name: Build (Python)
-        if: hashFiles('fovux-mcp/pyproject.toml') != ''
         run: |
           cd fovux-mcp
           uv build
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with: { node-version-file: fovux-studio/package.json }
       - name: Build (Node)
-        if: hashFiles('fovux-studio/package.json') != ''
         run: |
           cd fovux-studio
           corepack enable
-          pnpm install --frozen-lockfile
-          pnpm run build
-          pnpm exec vsce package --out fovux-studio.vsix --no-dependencies
+          npm ci || npm install
+          npm run build --if-present
+          npx vsce package
 
       - name: Sigstore sign (Python)
         if: hashFiles('fovux-mcp/dist/*.whl') != ''
@@ -79,11 +73,17 @@ jobs:
         with:
           inputs: fovux-mcp/dist/*.whl fovux-mcp/dist/*.tar.gz
 
-      - name: Build provenance attestation
-        if: hashFiles('fovux-mcp/dist/*', 'fovux-studio/fovux-studio.vsix') != ''
+      - name: Build provenance attestation (Python)
+        if: hashFiles('fovux-mcp/dist/*') != ''
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: 'fovux-mcp/dist/* fovux-studio/fovux-studio.vsix'
+          subject-path: 'fovux-mcp/dist/*'
+          
+      - name: Build provenance attestation (Node)
+        if: hashFiles('fovux-studio/*.vsix') != ''
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'fovux-studio/*.vsix'
 
       - name: Publish
         if: inputs.publish == 'true'
@@ -92,7 +92,7 @@ jobs:
         run: |
           doppler run --project all --config main -- bash scripts/publish.sh
 
-      - name: Create GitHub release
+      - name: Create GitHub release (draft if not publishing)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -106,4 +106,4 @@ jobs:
           assets=()
           if compgen -G "fovux-mcp/dist/*" > /dev/null; then assets+=(fovux-mcp/dist/*); fi
           if compgen -G "fovux-studio/*.vsix" > /dev/null; then assets+=(fovux-studio/*.vsix); fi
-          gh release create "${{ inputs.version }}" "${gh_args[@]}" "${assets[@]}"
+          gh release create "${{ inputs.version }}" "${gh_args[@]}" "${assets[@]}" || true

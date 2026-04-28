@@ -1,4 +1,4 @@
-name: PR Size Labeler
+name: PR size labeler
 
 on:
   pull_request:
@@ -6,12 +6,16 @@ on:
 
 permissions:
   pull-requests: write
+  issues: write
 
 jobs:
-  size-label:
-    runs-on: ubuntu-latest
+  size:
     if: github.repository == 'oaslananka-lab/fovux'
+    runs-on: ubuntu-latest
     steps:
       - uses: pascalgn/size-label-action@v0.5.5
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          sizes: >
+            {"0":"effort:xs","30":"effort:s","100":"effort:m","500":"effort:l","1000":"effort:xl"}

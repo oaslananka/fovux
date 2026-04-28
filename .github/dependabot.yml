@@ -34,9 +34,3 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
     labels: [dependencies, area:js]
-
-  - package-ecosystem: docker
-    directory: /fovux-mcp
-    schedule: { interval: weekly, day: monday }
-    open-pull-requests-limit: 5
-    labels: [dependencies, area:docker]

@@ -9,14 +9,10 @@ tasks:
   install:
     desc: Install all dev dependencies
     cmds:
-      - cmd: |
-          cd fovux-mcp
-          uv sync --all-extras --dev
+      - cmd: cd fovux-mcp && uv sync --all-extras --dev
         platforms: [linux, darwin, windows]
         ignore_error: false
-      - cmd: |
-          cd fovux-studio
-          corepack enable && pnpm install --frozen-lockfile
+      - cmd: cd fovux-studio && corepack enable && pnpm install --frozen-lockfile
         ignore_error: true
 
   hooks:
@@ -29,29 +25,17 @@ tasks:
   format:
     desc: Auto-format the codebase
     cmds:
-      - cmd: |
-          cd fovux-mcp
-          uvx ruff check --fix .
-      - cmd: |
-          cd fovux-mcp
-          uvx ruff format .
-      - cmd: |
-          cd fovux-studio
-          pnpm prettier --write . || true
+      - cmd: cd fovux-mcp && uvx ruff check --fix .
+      - cmd: cd fovux-mcp && uvx ruff format .
+      - cmd: cd fovux-studio && pnpm prettier --write . || true
         ignore_error: true
 
   lint:
     desc: Run all linters (read-only)
     cmds:
-      - cmd: |
-          cd fovux-mcp
-          uvx ruff check .
-      - cmd: |
-          cd fovux-mcp
-          uvx ruff format --check .
-      - cmd: |
-          cd fovux-studio
-          pnpm run lint || true
+      - cmd: cd fovux-mcp && uvx ruff check .
+      - cmd: cd fovux-mcp && uvx ruff format --check .
+      - cmd: cd fovux-studio && pnpm run lint || true
         ignore_error: true
       - cmd: actionlint || true
         ignore_error: true
@@ -59,48 +43,32 @@ tasks:
   typecheck:
     desc: Static type checking
     cmds:
-      - cmd: |
-          cd fovux-mcp
-          uv run mypy src
-      - cmd: |
-          cd fovux-studio
-          pnpm run typecheck || pnpm exec tsc --noEmit
+      - cmd: cd fovux-mcp && uv run mypy --strict src tests
+      - cmd: cd fovux-studio && pnpm run typecheck || pnpm exec tsc --noEmit
         ignore_error: true
 
   test:
     desc: Run unit tests
     cmds:
-      - cmd: |
-          cd fovux-mcp
-          uv run pytest -x --no-header -q
-      - cmd: |
-          cd fovux-studio
-          pnpm test --run
+      - cmd: cd fovux-mcp && uv run pytest -x --no-header -q
+      - cmd: cd fovux-studio && pnpm test --run
         ignore_error: true
 
   test:fast:
     desc: Run only fast tests
     cmds:
-      - cmd: |
-          cd fovux-mcp
-          uv run pytest -x --no-header -q -m "not slow"
+      - cmd: cd fovux-mcp && uv run pytest -x --no-header -q -m "not slow"
 
   test:cov:
     desc: Run tests with coverage
     cmds:
-      - cmd: |
-          cd fovux-mcp
-          uv run pytest --cov --cov-report=term-missing --cov-report=xml
+      - cmd: cd fovux-mcp && uv run pytest --cov=fovux --cov-report=term-missing --cov-report=xml
 
   security:
     desc: Security scans
     cmds:
-      - cmd: |
-          cd fovux-mcp
-          uvx bandit -r src -q
-      - cmd: |
-          cd fovux-mcp
-          uvx pip-audit
+      - cmd: cd fovux-mcp && uvx bandit -r src -q
+      - cmd: cd fovux-mcp && uvx pip-audit
       - cmd: gitleaks detect --no-banner --redact
 
   pre-push:
@@ -131,7 +99,7 @@ tasks:
   clean:
     desc: Remove build artifacts and caches
     cmds:
-      - cmd: rm -rf dist build .pytest_cache .mypy_cache .ruff_cache htmlcov coverage.xml junit.xml
+      - cmd: rm -rf dist build .pytest_cache .mypy_cache .ruff_cache htmlcov coverage.xml junit.xml fovux-mcp/dist fovux-studio/*.vsix
         platforms: [linux, darwin]
-      - cmd: powershell -Command "Remove-Item -Recurse -Force dist,build,.pytest_cache,.mypy_cache,.ruff_cache,htmlcov,coverage.xml,junit.xml -ErrorAction SilentlyContinue"
+      - cmd: powershell -Command "Remove-Item -Recurse -Force dist,build,.pytest_cache,.mypy_cache,.ruff_cache,htmlcov,coverage.xml,junit.xml,fovux-mcp/dist,fovux-studio/*.vsix -ErrorAction SilentlyContinue"
         platforms: [windows]

@@ -1,18 +1,10 @@
 # Release Process
 
-This repository automates the release process via `.github/workflows/release.yml`.
+Releases are completely automated via GitHub Actions on the org mirror.
 
-## How to trigger a release:
-1. Go to the Actions tab in GitHub.
-2. Select the `Release` workflow.
-3. Click `Run workflow`.
-4. Provide the `version` (e.g. `v1.2.3`).
-5. Select `true` for publish.
-6. Type `APPROVE_RELEASE` to confirm.
+1. Go to Actions -> Release workflow in the `oaslananka-lab` mirror.
+2. Run workflow.
+3. Input the version (e.g. `v1.2.3`).
+4. Select `publish=true` and type `APPROVE_RELEASE` to actually publish to registries. Otherwise, it will just create a draft GitHub release.
 
-The release workflow is guarded and only runs in the `oaslananka-lab/fovux` repository to ensure safe access to publishing credentials via Doppler.
-
-## What flows automatically:
-- Artifacts are built for Fovux-mcp and Fovux-studio.
-- Provenance and Sigstore signing is added.
-- The workflow mirrors the release back to the canonical repository.
+The workflow will automatically sign the binaries with Sigstore and upload provenance. It will also mirror the release back to the canonical repository.

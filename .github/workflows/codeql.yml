@@ -6,9 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '37 2 * * 5'
+    - cron: '37 11 * * 3'
 
 permissions:
+  actions: read
   contents: read
   security-events: write
 
@@ -25,15 +26,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
-
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:

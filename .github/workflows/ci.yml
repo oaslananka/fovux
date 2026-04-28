@@ -68,7 +68,7 @@ jobs:
 
       - name: Test summary
         if: always() && hashFiles('**/junit.xml') != ''
-        uses: test-summary/action@v2.4
+        uses: test-summary/action@v2
         with:
           paths: "**/junit.xml"
 
@@ -79,23 +79,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: fovux-mcp/coverage.xml
           directory: fovux-studio/coverage
-
-      - name: Install Doppler CLI
-        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: dopplerhq/cli-action@v4
-
-      - name: Notify Jules on failure
-        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: |
-          doppler run --project all --config main -- bash -c '
-            curl -fsSL -X POST https://jules.googleapis.com/v1alpha/sessions \
-              -H "x-goog-api-key: $JULES_API_KEY" \
-              -H "Content-Type: application/json" \
-              -d "$(jq -n \
-                --arg prompt "CI job ${{ github.job }} failed on ${{ github.ref_name }}. Run: ${{ github.run_id }}. Diagnose root cause, fix, open PR." \
-                --arg src "sources/github/${{ github.repository }}" \
-                --arg title "ci-fix: ${{ github.job }}" \
-                "{prompt: \$prompt, sourceContext: {source: \$src, githubRepoContext: {startingBranch: \"main\"}}, automationMode: \"AUTO_CREATE_PR\", title: \$title}")"
-          '

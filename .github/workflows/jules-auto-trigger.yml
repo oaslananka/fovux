@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   trigger:
-    if: |
+    if: github.repository == 'oaslananka-lab/fovux' && (|)
       contains(fromJSON('["type:bug","type:docs","type:refactor","good first issue"]'),
                github.event.label.name)
     runs-on: ubuntu-latest

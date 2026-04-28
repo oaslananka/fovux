@@ -14,12 +14,13 @@ concurrency:
 
 jobs:
   meta:
+    if: github.repository == 'oaslananka-lab/fovux'
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
       - name: actionlint
-        uses: raven-actions/actionlint@v1.7.7
+        uses: raven-actions/actionlint@v2
         with:
           fail-on-error: true
       - name: yamllint
@@ -28,7 +29,7 @@ jobs:
           yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .github/ || true
 
   python:
-    if: hashFiles('fovux-mcp/pyproject.toml') != ''
+    if: github.repository == 'oaslananka-lab/fovux' && hashFiles('fovux-mcp/pyproject.toml') != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -36,20 +37,18 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      - run: |
-          cd fovux-mcp
-          uvx ruff check .
-          uvx ruff format --check .
+      - run: uvx ruff check fovux-mcp
+      - run: uvx ruff format --check fovux-mcp
 
   node:
-    if: hashFiles('fovux-studio/package.json') != ''
+    if: github.repository == 'oaslananka-lab/fovux' && hashFiles('fovux-studio/package.json') != ''
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: 'fovux-studio/package.json'
+          node-version-file: fovux-studio/package.json
       - run: corepack enable
       - name: Detect package manager and install
         id: pm

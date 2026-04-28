@@ -1,26 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_CANONICAL="git@github.com:oaslananka/fovux.git"
-REPO_ORG="git@github.com:oaslananka-lab/fovux.git"
+git remote add personal https://github.com/oaslananka/fovux.git 2>/dev/null || true
+git remote add org https://github.com/oaslananka-lab/fovux.git 2>/dev/null || true
 
-if ! git remote get-url personal >/dev/null 2>&1; then
-    git remote add personal "$REPO_CANONICAL"
+branch=$(git branch --show-current)
+if [ -n "$branch" ]; then
+    git push personal "$branch" || true
+    git push org "$branch" || true
 fi
-
-if ! git remote get-url org >/dev/null 2>&1; then
-    git remote add org "$REPO_ORG"
-fi
-
-git fetch --all
-
-BRANCH=$(git branch --show-current)
-if [ -n "$BRANCH" ]; then
-    echo "Pushing branch $BRANCH to personal and org..."
-    git push personal "$BRANCH"
-    git push org "$BRANCH"
-fi
-
-echo "Pushing tags to personal and org..."
-git push personal --tags
-git push org --tags
+git push personal --tags || true
+git push org --tags || true

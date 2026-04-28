@@ -57,7 +57,7 @@ jobs:
 
       - name: 'Run Gemini issue analysis'
         id: 'gemini_analysis'
-        if: |-
+        if: github.repository == 'oaslananka-lab/fovux' && (|-)
           ${{ steps.get_labels.outputs.available_labels != '' }}
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         env:
@@ -103,7 +103,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     needs:
       - 'triage'
-    if: |-
+    if: github.repository == 'oaslananka-lab/fovux' && (|-)
       ${{ needs.triage.outputs.selected_labels != '' }}
     permissions:
       contents: 'read'
