@@ -37,13 +37,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: arduino/setup-task@v2
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         if: hashFiles('fovux-mcp/pyproject.toml') != ''
         with:
           python-version: ${{ matrix.python-version }}
@@ -57,6 +57,23 @@ jobs:
         if: hashFiles('fovux-studio/package.json') != ''
         with:
           node-version: ${{ matrix.node-version }}
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.x"
+          cache: false
+
+      - name: Install actionlint
+        shell: bash
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Enable pnpm
+        if: hashFiles('fovux-studio/package.json') != ''
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
 
       - name: Install dependencies
         run: task install
