@@ -57,8 +57,10 @@ class DatasetInspectOutput(BaseModel):
     classes: list[ClassStat]
     image_size_distribution: SizeHistogram
     bbox_size_distribution: SizeHistogram
+    bbox_size_buckets: dict[str, int] = Field(default_factory=dict)
     bbox_count_per_image: Histogram
     orphan_images: int
+    missing_label_images: list[Path] = Field(default_factory=list)
     orphan_annotations: int
     class_balance_gini: float
     splits_detected: dict[str, int]

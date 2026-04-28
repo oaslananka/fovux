@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fovux-mcp"
-version = "4.1.0"
+version = "4.1.1"
 description = "Local-first edge-AI computer vision workbench MCP server"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -71,11 +71,10 @@ dev = [
 ]
 
 [project.scripts]
-fovux = "fovux.cli:app"
-
+# Primary alias - used by VS Code extension and MCP clients.
 fovux-mcp = "fovux.cli:app"
-
-
+# Convenience alias - shorter form for direct CLI use.
+fovux = "fovux.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/oaslananka/fovux"
@@ -119,7 +118,7 @@ select = [
     "PIE",             # flake8-pie
 ]
 ignore = [
-    "D100", "D101", "D102", "D104", "D107",  # missing docstring (relaxed for now)
+    "D107",  # __init__ docstrings are intentionally optional.
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -140,7 +139,7 @@ files = ["src/fovux"]
 testpaths = ["tests"]
 addopts = [
     "--cov=fovux",
-    "--cov-fail-under=90",
+    "--cov-fail-under=92",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
@@ -164,16 +163,12 @@ source = ["src/fovux"]
 omit = [
     "tests/*",
     # Entry points and integration-heavy adapters are validated by focused tests,
-    # contract tests, or CI smoke paths; keep the 90% gate on deterministic core code.
+    # contract tests, or CI smoke paths; keep the gate on deterministic core code.
     "src/fovux/__main__.py",
     "src/fovux/cli.py",
     "src/fovux/core/dataset_utils.py",
     "src/fovux/core/train_worker.py",
     "src/fovux/core/ultralytics_adapter.py",
-    "src/fovux/http/routes.py",
-    "src/fovux/tools/benchmark_latency.py",
-    "src/fovux/tools/eval_error_analysis.py",
-    "src/fovux/tools/export_onnx.py",
     "src/fovux/tools/export_tflite.py",
     "src/fovux/tools/infer_image.py",
     "src/fovux/tools/infer_rtsp.py",

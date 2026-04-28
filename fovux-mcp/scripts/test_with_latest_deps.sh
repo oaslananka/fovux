@@ -1,52 +1,16 @@
 #!/usr/bin/env bash
+# Nightly: test fovux-mcp against latest allowed dependency versions.
 set -euo pipefail
 
-# Test fovux-mcp against the latest published versions of critical dependencies.
-# Intended for the nightly compatibility CI job.
+REPORT_FILE="${BASH_SOURCE%/*}/../nightly-compat-report.txt"
+echo "Nightly Compatibility Report - $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$REPORT_FILE"
+echo "Commit: ${GITHUB_SHA:-local}" >> "$REPORT_FILE"
+echo "" >> "$REPORT_FILE"
 
-WATCHED_DEPS=(
-  ultralytics
-  onnxruntime
-  torch
-  torchvision
-  onnx
-  opencv-python-headless
-  fastmcp
-  fastapi
-  pydantic
-)
+echo "=== Installing latest compatible deps ===" | tee -a "$REPORT_FILE"
+uv sync --upgrade --extra dev 2>&1 | tee -a "$REPORT_FILE"
 
-echo "=== Nightly Compatibility Test ==="
-echo "Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "Commit: ${GITHUB_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 'unknown')}"
-echo ""
+echo "=== Running test suite ===" | tee -a "$REPORT_FILE"
+uv run pytest -x -q -m "not slow and not gpu and not network" --tb=short 2>&1 | tee -a "$REPORT_FILE"
 
-# Install base deps from lockfile, then force-upgrade watched deps
-uv sync --locked --extra dev
-
-echo "Upgrading watched dependencies to latest..."
-for dep in "${WATCHED_DEPS[@]}"; do
-  echo "  Upgrading: $dep"
-  uv pip install --upgrade "$dep" 2>/dev/null || echo "  Warning: could not upgrade $dep"
-done
-
-echo ""
-echo "Installed versions:"
-for dep in "${WATCHED_DEPS[@]}"; do
-  version=$(uv pip show "$dep" 2>/dev/null | grep "^Version:" | cut -d' ' -f2 || echo "not installed")
-  echo "  $dep: $version"
-done
-
-echo ""
-echo "=== Running test suite ==="
-
-# Run tests and capture output
-if uv run pytest tests --no-header -q --timeout=120 2>&1 | tee nightly-compat-report.txt; then
-  echo ""
-  echo "=== All tests passed ==="
-  exit 0
-else
-  echo ""
-  echo "=== COMPATIBILITY BREAK DETECTED ==="
-  exit 1
-fi
+echo "=== Compat check passed ===" | tee -a "$REPORT_FILE"

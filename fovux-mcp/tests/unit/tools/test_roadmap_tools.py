@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 from PIL import Image
 
-from fovux.core.errors import FovuxError, FovuxTrainingRunNotFoundError
+from fovux.core.errors import FovuxDatasetNotFoundError, FovuxError, FovuxTrainingRunNotFoundError
 from fovux.core.paths import ensure_fovux_dirs
 from fovux.core.runs import RunRegistry
 from fovux.core.tool_registry import available_tools
@@ -24,7 +24,11 @@ from fovux.schemas.inference import (
     TrainAdjustInput,
 )
 from fovux.schemas.management import RunArchiveInput
-from fovux.tools.active_learning_select import _run_active_learning_select
+from fovux.tools.active_learning_select import (
+    _extract_confidences,
+    _run_active_learning_select,
+    _score_image,
+)
 from fovux.tools.dataset_augment import _run_dataset_augment
 from fovux.tools.distill_model import _run_distill_model
 from fovux.tools.infer_ensemble import _run_infer_ensemble
@@ -182,6 +186,60 @@ def test_active_learning_select_picks_highest_uncertainty(tmp_path: Path) -> Non
         )
 
     assert output.selected[0]["image_path"] == str(pool / "high.jpg")
+
+
+def test_active_learning_select_rejects_missing_pool(tmp_path: Path) -> None:
+    """Active learning should fail clearly for missing unlabeled image pools."""
+    with pytest.raises(FovuxDatasetNotFoundError):
+        _run_active_learning_select(
+            ActiveLearningSelectInput(
+                checkpoint=str(tmp_path / "model.pt"),
+                unlabeled_pool=tmp_path / "missing",
+            )
+        )
+
+
+def test_active_learning_score_strategies(tmp_path: Path) -> None:
+    """Uncertainty scoring should cover least-confident, margin, entropy, and no boxes."""
+    checkpoint = tmp_path / "model.pt"
+    checkpoint.write_bytes(b"weights")
+    image = tmp_path / "image.jpg"
+    Image.new("RGB", (8, 8), color=(255, 255, 255)).save(image)
+
+    def fake_model(confidences: list[float]) -> SimpleNamespace:
+        return SimpleNamespace(
+            predict=lambda **_kwargs: [
+                SimpleNamespace(
+                    boxes=SimpleNamespace(conf=SimpleNamespace(tolist=lambda: confidences))
+                )
+            ]
+        )
+
+    with (
+        patch("fovux.tools.active_learning_select.resolve_checkpoint", return_value=checkpoint),
+        patch("fovux.tools.active_learning_select.load_yolo_model", return_value=fake_model([])),
+    ):
+        assert _score_image(str(checkpoint), image, "entropy") == 1.0
+
+    with (
+        patch("fovux.tools.active_learning_select.resolve_checkpoint", return_value=checkpoint),
+        patch(
+            "fovux.tools.active_learning_select.load_yolo_model",
+            return_value=fake_model([0.8, 0.55]),
+        ),
+    ):
+        assert _score_image(str(checkpoint), image, "least_confident") == pytest.approx(0.2)
+        assert _score_image(str(checkpoint), image, "margin") == pytest.approx(0.75)
+        assert _score_image(str(checkpoint), image, "entropy") == pytest.approx(0.65)
+
+
+def test_extract_confidences_handles_iterables_and_missing_boxes() -> None:
+    """Confidence extraction should accept tensor-like and iterable confidence collections."""
+    assert _extract_confidences(SimpleNamespace(boxes=None)) == []
+    assert _extract_confidences(SimpleNamespace(boxes=SimpleNamespace(conf=[0.1, 0.9]))) == [
+        0.1,
+        0.9,
+    ]
 
 
 def test_distill_model_starts_training_with_distillation_args(tmp_path: Path, monkeypatch) -> None:

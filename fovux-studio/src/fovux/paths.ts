@@ -16,10 +16,15 @@ export interface FovuxProfile {
   home: string;
 }
 
+let sessionActiveProfile: string | null = null;
+
 export function resolveFovuxHome(): string {
   const config = vscode.workspace.getConfiguration("fovux");
-  const activeProfile = config.get<string>("activeProfile");
-  const profile = resolveFovuxProfiles().find((candidate) => candidate.name === activeProfile);
+  const activeProfile =
+    sessionActiveProfile ?? config.get<string>("activeProfile");
+  const profile = resolveFovuxProfiles().find(
+    (candidate) => candidate.name === activeProfile,
+  );
   if (profile) {
     return expandHome(profile.home);
   }
@@ -32,6 +37,14 @@ export function resolveFovuxHome(): string {
     return expandHome(envHome);
   }
   return path.join(os.homedir(), ".fovux");
+}
+
+export function setSessionActiveFovuxProfile(profileName: string | null): void {
+  sessionActiveProfile = profileName;
+}
+
+export function getSessionActiveFovuxProfile(): string | null {
+  return sessionActiveProfile;
 }
 
 export function resolveFovuxProfiles(): FovuxProfile[] {

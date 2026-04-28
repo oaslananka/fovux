@@ -13,6 +13,13 @@ if [[ ! "${version}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$ ]]; then
 fi
 
 plain="${version#v}"
+pyproject_version="$(python - <<'PY'
+from pathlib import Path
+import re
+text = Path("fovux-mcp/pyproject.toml").read_text()
+print(re.search(r'^version = "([^"]+)"', text, re.MULTILINE).group(1))
+PY
+)"
 python_version="$(python - <<'PY'
 from pathlib import Path
 import re
@@ -31,8 +38,22 @@ if [[ "${python_version}" != "${plain}" ]]; then
   echo "fovux-mcp version ${python_version} does not match ${plain}" >&2
   exit 1
 fi
+if [[ "${pyproject_version}" != "${plain}" ]]; then
+  echo "fovux-mcp pyproject version ${pyproject_version} does not match ${plain}" >&2
+  exit 1
+fi
 if [[ "${studio_version}" != "${plain}" ]]; then
   echo "fovux-studio version ${studio_version} does not match ${plain}" >&2
+  exit 1
+fi
+
+if grep -q '^## \[Unreleased\]' CHANGELOG.md; then
+  echo "CHANGELOG still has [Unreleased] entries; promote them before cutting ${version}" >&2
+  exit 1
+fi
+
+if ! git tag --list "${version}" | grep -q .; then
+  echo "Git tag ${version} not found" >&2
   exit 1
 fi
 

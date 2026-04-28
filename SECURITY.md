@@ -2,15 +2,19 @@
 
 ## Supported Versions
 
-| Version | Supported |
-|---------|-----------|
-| 2.x     | ✅ Active |
-| < 2.0   | ❌ No longer maintained |
+| Version | Supported            |
+| ------- | -------------------- |
+| 4.x     | Active               |
+| < 4.0   | No longer maintained |
 
 ## Security Model
 
 Fovux is a **local-first tool**. The fovux-mcp HTTP transport binds exclusively to
 `127.0.0.1` (localhost) and is never exposed to a network interface by default.
+
+The detailed threat model is maintained in [docs/threat-model.md](docs/threat-model.md). Keep that
+document in sync when changing transport auth, local file access, command spawning, or release
+signing behavior.
 
 ### Authentication
 
@@ -25,6 +29,16 @@ Fovux is a **local-first tool**. The fovux-mcp HTTP transport binds exclusively 
 
 - After rotation, restart any MCP clients or restart the VS Code extension
   to reload the new token.
+
+Token rotation procedure:
+
+1. Stop active Studio dashboards or MCP clients that are using the old token.
+2. Run `fovux-mcp rotate-token`.
+3. Restart `fovux-mcp serve --http` if the server was already running.
+4. Reload the VS Code window or run `Fovux: Refresh Views` so Studio reads the new token from
+   `$FOVUX_HOME/auth.token`.
+5. If a token was exposed in logs or a support bundle, delete that bundle and rotate again after
+   confirming all clients are disconnected.
 
 ### Rate Limiting
 
@@ -51,6 +65,7 @@ Please **do not** open a public GitHub issue for security vulnerabilities.
 Email: **oaslananka@gmail.com**
 
 Include:
+
 1. A description of the vulnerability and its potential impact
 2. Reproduction steps (version, OS, configuration)
 3. Any relevant logs (redact tokens and paths)

@@ -1,17 +1,13 @@
 # Install the Backend
 
-The Fovux backend (`fovux-mcp`) powers all dataset, training, and inference tools.
+Fovux Studio talks to the local `fovux-mcp` backend for dataset inspection, training, export, and diagnostics. Installing it as a uv tool keeps the command isolated from project virtual environments while still making `fovux-mcp` available on your PATH.
 
-Install it in your Python environment:
+## Steps
 
-```bash
-pip install fovux-mcp
-```
+1. Run `uv tool install fovux-mcp` in a terminal, or click the install button in this walkthrough.
+2. If `uv` is not available, use the fallback `pip install fovux-mcp`.
+3. Confirm the backend is available with `fovux-mcp --help`.
 
-Or with `uv`:
+## Next Step
 
-```bash
-uv pip install fovux-mcp
-```
-
-Once installed, click the button below to verify.
+Click the button above to move to the next step.

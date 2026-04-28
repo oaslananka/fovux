@@ -12,6 +12,11 @@ if [ -z "${DOPPLER_TOKEN:-}" ]; then
   exit 1
 fi
 
+if ! command -v doppler >/dev/null 2>&1; then
+  echo "doppler CLI is not installed or not on PATH. Install the CLI before release verification." >&2
+  exit 1
+fi
+
 missing=()
 while IFS= read -r line; do
   case "$line" in ""|\#*) continue ;; esac

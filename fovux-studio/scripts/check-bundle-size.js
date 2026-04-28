@@ -1,65 +1,93 @@
 /**
- * Bundle-size regression check for the VSIX package.
+ * Deterministic bundle-size check for Fovux Studio.
  *
- * Compares the current VSIX size against a baseline and fails if the
- * size exceeds the baseline by more than 15%.
- *
- * Usage:
- *   node scripts/check-bundle-size.js [--update-baseline]
+ * Checks built JavaScript output directly so CI fails on the file that regressed:
+ * - out/extension.js: 500 KB
+ * - JavaScript files below out/webviews: 1 MB each
+ * - *.vsix package, when present: 10 MB
  */
 
-const { readFileSync, writeFileSync, existsSync, statSync, readdirSync } = require("node:fs");
-const { join, resolve } = require("node:path");
+const { existsSync, readdirSync, statSync } = require("node:fs");
+const { join, relative, resolve } = require("node:path");
 
 const ROOT = resolve(__dirname, "..");
-const BASELINE_PATH = join(ROOT, "scripts", "bundle-size-baseline.json");
-const THRESHOLD = 0.15; // 15% growth allowed
-
-function findVsix() {
-  const files = readdirSync(ROOT).filter((f) => f.endsWith(".vsix"));
-  if (files.length === 0) {
-    console.error("No .vsix file found. Run `pnpm exec vsce package` first.");
-    process.exit(1);
-  }
-  return join(ROOT, files[0]);
-}
+const LIMITS = {
+  extensionBytes: 500 * 1024,
+  webviewBytes: 1024 * 1024,
+  vsixBytes: 10 * 1024 * 1024,
+};
 
 function main() {
-  const updateBaseline = process.argv.includes("--update-baseline");
-  const vsixPath = findVsix();
-  const currentSize = statSync(vsixPath).size;
+  const failures = [];
+  const extensionPath = join(ROOT, "out", "extension.js");
+  checkRequiredFile(extensionPath, LIMITS.extensionBytes, failures);
 
-  console.log("VSIX: " + vsixPath);
-  console.log("Size: " + (currentSize / 1024).toFixed(1) + " KB");
-
-  if (updateBaseline) {
-    const baseline = { sizeBytes: currentSize, updatedAt: new Date().toISOString() };
-    writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2) + "\n");
-    console.log("Baseline updated to " + currentSize + " bytes.");
-    return;
+  const webviewRoot = join(ROOT, "out", "webviews");
+  const webviewFiles = existsSync(webviewRoot) ? findJsFiles(webviewRoot) : [];
+  if (webviewFiles.length === 0) {
+    failures.push(
+      "No webview bundles found under out/webviews. Run `pnpm build` first.",
+    );
+  }
+  for (const file of webviewFiles) {
+    checkRequiredFile(file, LIMITS.webviewBytes, failures);
   }
 
-  if (!existsSync(BASELINE_PATH)) {
-    console.log("No baseline found. Run with --update-baseline to create one.");
-    console.log("Skipping size check.");
-    return;
+  const vsixFiles = readdirSync(ROOT)
+    .filter((file) => file.endsWith(".vsix"))
+    .map((file) => join(ROOT, file));
+  for (const file of vsixFiles) {
+    checkRequiredFile(file, LIMITS.vsixBytes, failures);
+  }
+  if (vsixFiles.length === 0) {
+    console.log("No VSIX package found; skipping package size check.");
   }
 
-  const baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf-8"));
-  const baselineSize = baseline.sizeBytes;
-  const maxAllowed = Math.floor(baselineSize * (1 + THRESHOLD));
-  const growth = ((currentSize - baselineSize) / baselineSize * 100).toFixed(1);
-
-  console.log("Baseline: " + (baselineSize / 1024).toFixed(1) + " KB");
-  console.log("Growth: " + growth + "%");
-  console.log("Max allowed: " + (maxAllowed / 1024).toFixed(1) + " KB (+" + (THRESHOLD * 100).toFixed(0) + "%)");
-
-  if (currentSize > maxAllowed) {
-    console.error("FAIL: VSIX size " + currentSize + " exceeds baseline " + baselineSize + " by " + growth + "% (max " + (THRESHOLD * 100).toFixed(0) + "%).");
+  if (failures.length > 0) {
+    console.error("Bundle-size check failed:");
+    for (const failure of failures) {
+      console.error(`  - ${failure}`);
+    }
     process.exit(1);
   }
 
-  console.log("PASS: Bundle size within acceptable range.");
+  console.log("Bundle-size check passed.");
+}
+
+function checkRequiredFile(file, limitBytes, failures) {
+  if (!existsSync(file)) {
+    failures.push(
+      `${relative(ROOT, file)} is missing. Run \`pnpm build\` first.`,
+    );
+    return;
+  }
+  const sizeBytes = statSync(file).size;
+  const label = relative(ROOT, file).replace(/\\/g, "/");
+  console.log(
+    `${label}: ${formatBytes(sizeBytes)} / ${formatBytes(limitBytes)}`,
+  );
+  if (sizeBytes > limitBytes) {
+    failures.push(
+      `${label} is ${formatBytes(sizeBytes)}, limit is ${formatBytes(limitBytes)}`,
+    );
+  }
+}
+
+function findJsFiles(dir) {
+  const files = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...findJsFiles(fullPath));
+    } else if (entry.isFile() && entry.name.endsWith(".js")) {
+      files.push(fullPath);
+    }
+  }
+  return files.sort();
+}
+
+function formatBytes(bytes) {
+  return `${(bytes / 1024).toFixed(1)} KB`;
 }
 
 main();

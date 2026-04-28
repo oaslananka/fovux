@@ -1,6 +1,6 @@
-version: '3'
+version: "3"
 
-dotenv: ['.env']
+dotenv: [".env"]
 
 vars:
   PYTHON: '{{.PYTHON | default "python"}}'
@@ -13,7 +13,7 @@ tasks:
         platforms: [linux, darwin, windows]
         ignore_error: false
       - cmd: corepack enable
-        ignore_error: true
+        platforms: [linux, darwin]
       - cmd: cd fovux-studio && pnpm install --frozen-lockfile
 
   hooks:
@@ -37,8 +37,7 @@ tasks:
       - cmd: cd fovux-mcp && uvx ruff check .
       - cmd: cd fovux-mcp && uvx ruff format --check .
       - cmd: cd fovux-studio && pnpm run lint
-      - cmd: actionlint || true
-        ignore_error: true
+      - cmd: actionlint
 
   typecheck:
     desc: Static type checking
@@ -51,7 +50,6 @@ tasks:
     cmds:
       - cmd: cd fovux-mcp && uv run pytest -x --no-header -q
       - cmd: cd fovux-studio && pnpm test --run
-        ignore_error: true
 
   test:fast:
     desc: Run only fast tests
@@ -79,7 +77,7 @@ tasks:
     cmds:
       - task: typecheck
       - task: test:fast
-      - cmd: actionlint || true
+      - cmd: actionlint
 
   ci:
     desc: Run the exact CI pipeline locally - full parity

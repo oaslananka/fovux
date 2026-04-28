@@ -83,6 +83,7 @@ export interface TrainingLauncherInitialState {
   authToken: string | null;
   initialModels: ExportWizardModelArtifact[];
   fovuxHome: string;
+  initialDatasetPath: string;
   initialError: string | null;
   isServerReachable: boolean;
   userPresets: UserPreset[];
@@ -115,6 +116,8 @@ export type WebviewToExtensionMessage =
   | { type: "refreshAuthToken" }
   | { type: "saveUserPreset"; preset: UserPreset }
   | { type: "deleteUserPreset"; name: string }
+  | { type: "exportUserPresets" }
+  | { type: "importUserPresets"; presets: UserPreset[] }
   | { type: "selectFovuxProfile"; profile: FovuxProfile }
   | { type: "saveAnnotation"; imagePath: string; boxes: DatasetSampleBox[] };
 

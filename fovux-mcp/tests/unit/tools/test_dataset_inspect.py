@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from fovux.core.errors import FovuxDatasetNotFoundError
 from fovux.schemas.dataset import DatasetInspectInput
@@ -77,3 +78,25 @@ def test_inspect_duration_recorded():
     inp = DatasetInspectInput(dataset_path=FIXTURES / "mini_yolo")
     out = _run_inspect(inp)
     assert out.analysis_duration_seconds > 0
+
+
+def test_inspect_yolo_reports_missing_labels_and_bbox_buckets(tmp_path: Path):
+    """YOLO inspection should report images without labels and normalized bbox sizes."""
+    dataset_path = tmp_path / "dataset"
+    images_dir = dataset_path / "images" / "train"
+    labels_dir = dataset_path / "labels" / "train"
+    images_dir.mkdir(parents=True)
+    labels_dir.mkdir(parents=True)
+    for stem in ("small", "medium", "large", "missing"):
+        Image.new("RGB", (64, 64), color=(20, 20, 20)).save(images_dir / f"{stem}.jpg")
+    (labels_dir / "small.txt").write_text("0 0.5 0.5 0.05 0.05\n", encoding="utf-8")
+    (labels_dir / "medium.txt").write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
+    (labels_dir / "large.txt").write_text("0 0.5 0.5 0.5 0.5\n", encoding="utf-8")
+    (dataset_path / "data.yaml").write_text("names: ['object']\n", encoding="utf-8")
+
+    out = _run_inspect(DatasetInspectInput(dataset_path=dataset_path))
+
+    assert out.total_images == 4
+    assert out.orphan_images == 1
+    assert [path.name for path in out.missing_label_images] == ["missing.jpg"]
+    assert out.bbox_size_buckets == {"small": 1, "medium": 1, "large": 1}

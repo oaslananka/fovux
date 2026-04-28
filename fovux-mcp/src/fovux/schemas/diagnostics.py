@@ -25,6 +25,8 @@ class GpuHealth(BaseModel):
     detail: str = ""
     cuda_version: str | None = None
     cudnn_version: str | None = None
+    memory_free_gb: float | None = None
+    memory_total_gb: float | None = None
 
 
 class HttpHealth(BaseModel):

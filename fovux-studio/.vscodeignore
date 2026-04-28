@@ -6,9 +6,11 @@ test/**
 node_modules/**
 .gitignore
 .eslintrc.cjs
+eslint.config.js
 eslint.config.mjs
 .prettierrc.json
 tsconfig.json
+tsconfig.eslint.json
 tsup.config.ts
 pnpm-lock.yaml
 *.vsix

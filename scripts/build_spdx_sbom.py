@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
@@ -15,20 +16,47 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
+    if args.output.suffix == ".json":
+        _write_json_sbom(args.name, args.output)
+        return 0
+
+    _write_tag_value_sbom(args.name, args.output)
+    return 0
+
+
+def _write_json_sbom(name: str, output: Path) -> None:
+    created = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    document = {
+        "spdxVersion": "SPDX-2.3",
+        "dataLicense": "CC0-1.0",
+        "SPDXID": "SPDXRef-DOCUMENT",
+        "name": name,
+        "documentNamespace": f"https://github.com/oaslananka/fovux/spdx/{uuid4()}",
+        "creationInfo": {
+            "created": created,
+            "creators": ["Tool: fovux-build-spdx-sbom.py"],
+        },
+        "packages": [_package_json(dist) for dist in _distributions()],
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
+def _write_tag_value_sbom(name: str, output: Path) -> None:
     lines = [
         "SPDXVersion: SPDX-2.3",
         "DataLicense: CC0-1.0",
         "SPDXID: SPDXRef-DOCUMENT",
-        f"DocumentName: {args.name}",
+        f"DocumentName: {name}",
         f"DocumentNamespace: https://github.com/oaslananka/fovux/spdx/{uuid4()}",
         "Creator: Tool: fovux-build-spdx-sbom.py",
         f"Created: {datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')}",
         "",
     ]
 
-    for dist in sorted(
-        metadata.distributions(), key=lambda item: item.metadata["Name"].lower()
-    ):
+    for dist in _distributions():
         name = dist.metadata["Name"]
         version = dist.version
         license_value = _license_for(dist)
@@ -47,9 +75,30 @@ def main() -> int:
             ]
         )
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text("\n".join(lines), encoding="utf-8")
-    return 0
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _package_json(dist: metadata.Distribution) -> dict[str, object]:
+    name = dist.metadata["Name"]
+    version = dist.version
+    package_id = "SPDXRef-Package-" + _sanitize(f"{name}-{version}")
+    return {
+        "SPDXID": package_id,
+        "name": name,
+        "versionInfo": version,
+        "downloadLocation": "NOASSERTION",
+        "filesAnalyzed": False,
+        "licenseConcluded": "NOASSERTION",
+        "licenseDeclared": _license_for(dist),
+        "copyrightText": "NOASSERTION",
+    }
+
+
+def _distributions() -> list[metadata.Distribution]:
+    return sorted(
+        metadata.distributions(), key=lambda item: item.metadata["Name"].lower()
+    )
 
 
 def _license_for(dist: metadata.Distribution) -> str:

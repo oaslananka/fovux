@@ -2,23 +2,28 @@
   "name": "fovux-studio",
   "displayName": "Fovux Studio",
   "description": "Visual companion for Fovux MCP — run dashboards, dataset inspector, export wizard.",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "publisher": "oaslananka",
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.33.0",
-  "pnpm": {
-    "overrides": {
-      "uuid": "14.0.0"
-    }
-  },
   "engines": {
     "vscode": "^1.98.0",
-    "node": ">=24.14.1 <25"
+    "node": ">=22.0.0"
   },
   "extensionKind": [
     "workspace",
     "ui"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Fovux Studio can display runs and models in untrusted workspaces but cannot start servers or launch training.",
+      "restrictedConfigurations": [
+        "fovux.home",
+        "fovux.serverCommand"
+      ]
+    }
+  },
   "categories": [
     "Machine Learning",
     "Visualization",
@@ -135,8 +140,7 @@
         "command": "fovux.revealPath",
         "title": "Fovux: Reveal Path",
         "category": "Fovux",
-        "icon": "$(folder-opened)",
-        "enablement": "false"
+        "icon": "$(folder-opened)"
       },
       {
         "command": "fovux.deleteRun",
@@ -167,6 +171,60 @@
         "title": "Fovux: Select FOVUX_HOME Profile",
         "category": "Fovux",
         "icon": "$(account)"
+      },
+      {
+        "command": "fovux.installBackend",
+        "title": "Fovux: Install Backend (fovux-mcp)",
+        "category": "Fovux",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "fovux.runDoctor",
+        "title": "Fovux: Run Doctor Check",
+        "category": "Fovux",
+        "icon": "$(heart-filled)"
+      },
+      {
+        "command": "fovux.openUpgradeGuide",
+        "title": "Fovux: Open Upgrade Guide",
+        "category": "Fovux",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "fovux.openSecurityDoc",
+        "title": "Fovux: Open Security Policy",
+        "category": "Fovux",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "fovux.validateDataset",
+        "title": "Fovux: Validate Dataset",
+        "category": "Fovux",
+        "icon": "$(check)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "fovux.startTraining",
+        "key": "ctrl+shift+f t",
+        "mac": "cmd+shift+f t",
+        "when": "fovux.serverRunning"
+      },
+      {
+        "command": "fovux.openDashboard",
+        "key": "ctrl+shift+f d",
+        "mac": "cmd+shift+f d"
+      },
+      {
+        "command": "fovux.openDatasetInspector",
+        "key": "ctrl+shift+f i",
+        "mac": "cmd+shift+f i"
+      },
+      {
+        "command": "fovux.refreshViews",
+        "key": "ctrl+shift+f r",
+        "mac": "cmd+shift+f r",
+        "when": "view =~ /^fovux\\./i"
       }
     ],
     "languageModelTools": [
@@ -782,8 +840,8 @@
     "dev": "pnpm exec tsup --watch",
     "format": "prettier --check \"src/**/*.{ts,tsx}\" \"test/**/*.ts\" \"*.{json,md,mjs}\"",
     "format:write": "prettier --write \"src/**/*.{ts,tsx}\" \"test/**/*.ts\" \"*.{json,md,mjs}\"",
-    "lint": "eslint src test --ext ts,tsx --no-error-on-unmatched-pattern",
-    "lint:fix": "eslint src test --ext ts,tsx --fix --no-error-on-unmatched-pattern",
+    "lint": "eslint src test",
+    "lint:fix": "eslint src test --fix",
     "typecheck": "tsc --noEmit",
     "test": "pnpm exec vitest run",
     "test:unit": "pnpm exec vitest run test/suite --coverage",
@@ -797,7 +855,7 @@
     "check:bundle-size": "node scripts/check-bundle-size.js"
   },
   "devDependencies": {
-    "@types/node": "^24.12.2",
+    "@types/node": "^22.19.17",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/vscode": "1.98.0",

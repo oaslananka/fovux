@@ -16,13 +16,13 @@ fovux/
 
 ## Prerequisites
 
-| Tool | Version | Install |
-|------|---------|---------|
-| Python | ≥ 3.11 | https://python.org |
-| [uv](https://docs.astral.sh/uv/) | latest | `pip install uv` |
-| Node.js | 24.14.1 (pinned in `.nvmrc`) | https://nodejs.org |
-| pnpm | 10.33.0 | `corepack enable && corepack prepare pnpm@10.33.0 --activate` |
-| pre-commit | ≥ 4.0 | included in `dev` extra |
+| Tool                             | Version                                                       | Install                                                       |
+| -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
+| Python                           | ≥ 3.11                                                        | https://python.org                                            |
+| [uv](https://docs.astral.sh/uv/) | latest                                                        | `pip install uv`                                              |
+| Node.js                          | >= 22.0.0, with 24.14.1 pinned in `.nvmrc` for release builds | https://nodejs.org                                            |
+| pnpm                             | 10.33.0                                                       | `corepack enable && corepack prepare pnpm@10.33.0 --activate` |
+| pre-commit                       | ≥ 4.0                                                         | included in `dev` extra                                       |
 
 ## Local setup
 
@@ -30,17 +30,14 @@ fovux/
 git clone https://github.com/oaslananka/fovux
 cd fovux
 
-# Python backend
-cd fovux-mcp
-uv sync --locked --extra dev
-uv run pre-commit install --hook-type pre-commit --hook-type pre-push
-cd ..
-
-# VS Code extension
-cd fovux-studio
-pnpm install --frozen-lockfile
-cd ..
+# Fast path: install dependencies, hooks, and run the repo-quality gate.
+task install
+task hooks
+task ci
 ```
+
+That sequence is the expected 15-minute path to a working checkout. If `task` is unavailable,
+run the Python and Studio commands below directly.
 
 ## Running the quality gates
 
@@ -56,7 +53,7 @@ python ../scripts/quality_gate.py mcp-check
 uv run ruff check src tests
 uv run ruff format --check src tests
 uv run mypy src
-uv run pytest --cov=fovux --cov-fail-under=85
+uv run pytest --cov=fovux --cov-fail-under=92
 ```
 
 ### TypeScript (fovux-studio)
@@ -74,6 +71,22 @@ pnpm typecheck
 pnpm test
 pnpm build
 ```
+
+## CLI aliases
+
+The backend publishes two command aliases on purpose:
+
+- `fovux-mcp` is the primary alias used by VS Code Studio, MCP clients, examples, and automation.
+- `fovux` is a shorter convenience alias for direct CLI use.
+
+Keep both aliases working when changing CLI registration, documentation, or release scripts.
+
+## Optional Doppler setup
+
+Normal local development does not require Doppler. Release workflows that publish artifacts do
+require the Doppler CLI and a `DOPPLER_TOKEN` secret because release signing and publishing commands
+run through `doppler run --project all --config main`. See `docs/doppler-setup.md` for maintainer
+setup and troubleshooting.
 
 ## Commit style
 

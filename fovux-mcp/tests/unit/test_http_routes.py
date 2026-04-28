@@ -100,6 +100,33 @@ def test_metrics_sse_missing_run_returns_404(tmp_fovux_home: Path) -> None:
     assert response.status_code == 404
 
 
+def test_stream_endpoint_emits_terminal_done_event(tmp_fovux_home: Path) -> None:
+    """The canonical SSE endpoint should close with a done event for terminal runs."""
+    run_dir, _registry = _seed_run(tmp_fovux_home, run_id="run_done")
+    (run_dir / "status.json").write_text('{"status": "completed"}', encoding="utf-8")
+    (run_dir / "metrics.jsonl").write_text(
+        '{"run_id": "run_done", "epoch": 1, "metrics": {"metrics/mAP50(B)": 0.66}}\n',
+        encoding="utf-8",
+    )
+
+    with TestClient(create_app()) as client:
+        response = client.get("/runs/run_done/stream", headers=_auth_headers(client))
+
+    assert response.status_code == 200
+    assert "event: metric" in response.text
+    assert "event: done" in response.text
+
+
+def test_stream_endpoint_requires_auth(tmp_fovux_home: Path) -> None:
+    """Run metric streams should keep the same auth behavior as other run endpoints."""
+    _seed_run(tmp_fovux_home, run_id="run_auth")
+
+    with TestClient(create_app()) as client:
+        response = client.get("/runs/run_auth/stream")
+
+    assert response.status_code == 401
+
+
 def test_tool_proxy_invokes_local_tool(tmp_fovux_home: Path) -> None:
     """POST /tools/{name} should proxy to the local tool implementation."""
     with TestClient(create_app()) as client:
@@ -178,6 +205,64 @@ def test_list_runs_prefers_worker_status_file(tmp_fovux_home: Path) -> None:
     payload = response.json()
     assert payload[0]["id"] == "run_failed"
     assert payload[0]["status"] == "failed"
+
+
+def test_search_runs_filters_query_tags_status_and_map50(tmp_fovux_home: Path) -> None:
+    """Run search should combine text, tag, status, and minimum mAP filters."""
+    paths = ensure_fovux_dirs(tmp_fovux_home)
+    registry = RunRegistry(paths.runs_db)
+    match_dir = paths.runs / "run_release_candidate"
+    skip_dir = paths.runs / "run_cpu_smoke"
+    match_dir.mkdir(parents=True)
+    skip_dir.mkdir(parents=True)
+    registry.create_run(
+        run_id="run_release_candidate",
+        run_path=match_dir,
+        model="yolov8m.pt",
+        dataset_path=tmp_fovux_home / "production-dataset",
+        task="detect",
+        epochs=50,
+        tags=["production", "edge"],
+        extra={"note": "needle"},
+    )
+    registry.update_status("run_release_candidate", "complete")
+    registry.create_run(
+        run_id="run_cpu_smoke",
+        run_path=skip_dir,
+        model="yolov8n.pt",
+        dataset_path=tmp_fovux_home / "smoke-dataset",
+        task="detect",
+        epochs=5,
+        tags=["smoke"],
+    )
+    registry.update_status("run_cpu_smoke", "failed")
+    (match_dir / "results.csv").write_text(
+        "epoch,metrics/mAP50(B)\n0,0.30\n1,0.74\n",
+        encoding="utf-8",
+    )
+    (skip_dir / "results.csv").write_text(
+        "epoch,metrics/mAP50(B)\n0,0.20\n",
+        encoding="utf-8",
+    )
+
+    with TestClient(create_app()) as client:
+        response = client.post(
+            "/runs/search",
+            json={
+                "query": "needle",
+                "tags": ["edge"],
+                "status": ["complete"],
+                "min_map50": 0.70,
+                "limit": 1,
+            },
+            headers=_auth_headers(client),
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert [item["id"] for item in payload] == ["run_release_candidate"]
+    assert payload[0]["best_map50"] == pytest.approx(0.74)
+    assert payload[0]["tags"] == ["edge", "production"]
 
 
 def test_get_run_returns_current_epoch_and_metrics(tmp_fovux_home: Path) -> None:

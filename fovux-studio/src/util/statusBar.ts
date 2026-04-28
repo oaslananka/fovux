@@ -7,13 +7,18 @@ import type { CompatState } from "../fovux/compat";
 
 let compatItem: vscode.StatusBarItem | null = null;
 let privacyItem: vscode.StatusBarItem | null = null;
+let activeRunsItem: vscode.StatusBarItem | null = null;
+let profileItem: vscode.StatusBarItem | null = null;
 
 /**
  * Create or update the compatibility status bar item.
  */
 export function updateCompatStatusBar(state: CompatState): void {
   if (!compatItem) {
-    compatItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
+    compatItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      50,
+    );
   }
 
   switch (state) {
@@ -21,18 +26,24 @@ export function updateCompatStatusBar(state: CompatState): void {
       compatItem.text = "$(check) Fovux: connected";
       compatItem.tooltip = "fovux-mcp server is running a recommended version.";
       compatItem.backgroundColor = undefined;
+      compatItem.command = undefined;
       break;
     case "connected:supported":
       compatItem.text = "$(warning) Fovux: connected (supported)";
       compatItem.tooltip =
         "fovux-mcp server version is supported but below recommended. Consider upgrading.";
-      compatItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
+      compatItem.backgroundColor = new vscode.ThemeColor(
+        "statusBarItem.warningBackground",
+      );
+      compatItem.command = "fovux.openUpgradeGuide";
       break;
     case "incompatible":
       compatItem.text = "$(error) Fovux: incompatible";
       compatItem.tooltip =
         "fovux-mcp server version is outside the supported range. Tool calls are suspended.";
-      compatItem.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
+      compatItem.backgroundColor = new vscode.ThemeColor(
+        "statusBarItem.errorBackground",
+      );
       compatItem.command = "fovux.openUpgradeGuide";
       break;
   }
@@ -46,7 +57,10 @@ export function updateCompatStatusBar(state: CompatState): void {
  */
 export function showPrivacyBadge(): void {
   if (!privacyItem) {
-    privacyItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 49);
+    privacyItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      49,
+    );
     privacyItem.text = "$(lock) Fovux: local-only";
     privacyItem.tooltip = [
       "Fovux operates in local-only mode:",
@@ -60,6 +74,47 @@ export function showPrivacyBadge(): void {
     privacyItem.command = "fovux.openSecurityDoc";
   }
   privacyItem.show();
+}
+
+export function updateActiveRunsBadge(
+  activeRuns: number,
+  latestMap50?: number | null,
+): void {
+  if (!activeRunsItem) {
+    activeRunsItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      48,
+    );
+    activeRunsItem.tooltip = "Active Fovux training runs";
+    activeRunsItem.command = "fovux.openDashboard";
+  }
+
+  if (activeRuns <= 0) {
+    activeRunsItem.hide();
+    return;
+  }
+
+  const metric =
+    typeof latestMap50 === "number"
+      ? ` | mAP50: ${latestMap50.toFixed(3)}`
+      : "";
+  activeRunsItem.text = `$(loading~spin) Fovux: ${activeRuns} runs active${metric}`;
+  activeRunsItem.show();
+}
+
+export function updateProfileStatusBar(profileName: string | null): void {
+  if (!profileItem) {
+    profileItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      47,
+    );
+    profileItem.command = "fovux.selectProfile";
+  }
+
+  profileItem.text = `$(account) Fovux: [${profileName || "default"}]`;
+  profileItem.tooltip =
+    "Select the active FOVUX_HOME profile for this VS Code session.";
+  profileItem.show();
 }
 
 /**
@@ -77,4 +132,8 @@ export function disposeStatusBarItems(): void {
   compatItem = null;
   privacyItem?.dispose();
   privacyItem = null;
+  activeRunsItem?.dispose();
+  activeRunsItem = null;
+  profileItem?.dispose();
+  profileItem = null;
 }

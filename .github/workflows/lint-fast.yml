@@ -16,7 +16,7 @@ jobs:
   meta:
     if: github.repository == 'oaslananka-lab/fovux'
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: actionlint
@@ -25,8 +25,8 @@ jobs:
           fail-on-error: true
       - name: yamllint
         run: |
-          pipx install yamllint || pip install --user yamllint
-          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .github/ || true
+          python -m pip install --quiet yamllint
+          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .github/
 
   python:
     if: github.repository == 'oaslananka-lab/fovux'
@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uvx ruff check fovux-mcp
@@ -46,25 +46,16 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version-file: fovux-studio/package.json
-      - run: corepack enable
-      - name: Detect package manager and install
-        id: pm
+          node-version-file: .nvmrc
+      - name: Install Node dependencies
         run: |
           cd fovux-studio
-          if [ -f pnpm-lock.yaml ]; then echo "cmd=pnpm" >> "$GITHUB_OUTPUT"
-          elif [ -f yarn.lock ]; then echo "cmd=yarn" >> "$GITHUB_OUTPUT"
-          else echo "cmd=npm" >> "$GITHUB_OUTPUT"; fi
-      - run: |
-          cd fovux-studio
-          ${{ steps.pm.outputs.cmd }} install --frozen-lockfile || ${{ steps.pm.outputs.cmd }} install
-      - name: Lint (if defined)
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+          pnpm install --frozen-lockfile
+      - name: Lint
         run: |
           cd fovux-studio
-          if node -e "process.exit(require('./package.json').scripts?.lint?0:1)"; then
-            ${{ steps.pm.outputs.cmd }} run lint
-          else
-            echo "No lint script; skipping."
-          fi
+          pnpm run lint

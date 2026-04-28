@@ -1,10 +1,13 @@
 # Set Your Profile
 
-Fovux uses `FOVUX_HOME` to store runs, models, and exports.
+Fovux stores runs, checkpoints, exports, auth tokens, and local metadata under `FOVUX_HOME`. A stable profile keeps Studio, the MCP server, and CLI tools pointed at the same local workbench.
 
-The default is `~/.fovux`. You can set a custom path:
+## Steps
 
-1. Open **Settings** → search for `fovux.home`.
-2. Or set the `FOVUX_HOME` environment variable.
+1. Open VS Code Settings and search for `fovux.home`.
+2. Set it to the folder you want to use, or leave it empty to use `~/.fovux`.
+3. For multiple workspaces, add named entries to `fovux.profiles` and select one from the Fovux status bar.
 
-Multiple profiles let you manage separate workspaces for different projects.
+## Next Step
+
+Click the button above to move to the next step.

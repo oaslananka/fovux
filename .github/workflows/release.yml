@@ -1,5 +1,9 @@
 name: Release
 
+# Release publishing requires the Doppler CLI plus a DOPPLER_TOKEN secret with
+# access to project=all/config=main. Dry-run builds still verify that the token
+# can read the required release secrets before packaging.
+
 on:
   workflow_dispatch:
     inputs:
@@ -49,16 +53,28 @@ jobs:
         run: bash scripts/verify_doppler_secrets.sh
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
       - name: Build (Python)
         run: |
           cd fovux-mcp
           uv sync --locked --extra dev
           uv run python -m build
 
+      - name: Generate SPDX SBOM
+        run: |
+          cd fovux-mcp
+          uv run python ../scripts/build_spdx_sbom.py --output ../sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+          retention-days: 90
+
       - name: Set up Node
-        uses: actions/setup-node@v4
-        with: { node-version-file: fovux-studio/package.json }
+        uses: actions/setup-node@v6
+        with: { node-version-file: .nvmrc }
       - name: Build (Node)
         run: |
           cd fovux-studio
@@ -67,6 +83,7 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm build
           pnpm exec vsce package --out fovux-studio.vsix --no-dependencies
+          pnpm check:bundle-size
 
       - name: Sigstore sign (Python)
         if: hashFiles('fovux-mcp/dist/*.whl') != ''
@@ -78,13 +95,13 @@ jobs:
         if: hashFiles('fovux-mcp/dist/*') != ''
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: 'fovux-mcp/dist/*'
+          subject-path: "fovux-mcp/dist/*"
 
       - name: Build provenance attestation (Node)
         if: hashFiles('fovux-studio/*.vsix') != ''
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: 'fovux-studio/*.vsix'
+          subject-path: "fovux-studio/*.vsix"
 
       - name: Publish
         if: inputs.publish == 'true'
@@ -107,6 +124,7 @@ jobs:
           assets=()
           if compgen -G "fovux-mcp/dist/*" > /dev/null; then assets+=(fovux-mcp/dist/*); fi
           if compgen -G "fovux-studio/*.vsix" > /dev/null; then assets+=(fovux-studio/*.vsix); fi
+          if [ -f "sbom.spdx.json" ]; then assets+=(sbom.spdx.json); fi
           if gh release view "${{ inputs.version }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             gh release upload "${{ inputs.version }}" --repo "${{ github.repository }}" "${assets[@]}" --clobber
           else

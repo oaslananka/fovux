@@ -10,7 +10,7 @@ from unittest.mock import patch
 import numpy as np
 from PIL import Image
 
-from fovux.core.doctor import collect_doctor_report
+from fovux.core.doctor import _detect_gpu, collect_doctor_report
 from fovux.schemas.diagnostics import AnnotationQualityCheckInput, ModelProfileInput
 from fovux.schemas.inference import InferBatchInput
 from fovux.tools.annotation_quality_check import (
@@ -72,6 +72,39 @@ def test_doctor_report_includes_release_gate_health(tmp_fovux_home: Path) -> Non
     assert report.system.ram_total_gb >= 0
     assert any("Ultralytics" in notice for notice in report.license_notices)
     assert "python_supported" in report.requirements
+
+
+def test_doctor_gpu_health_includes_cuda_memory() -> None:
+    """CUDA diagnostics should include available and total memory when torch exposes it."""
+    fake_cuda = SimpleNamespace(
+        is_available=lambda: True,
+        get_device_name=lambda _index: "RTX Test",
+        mem_get_info=lambda: (8 * 1024**3, 24 * 1024**3),
+    )
+    fake_torch = SimpleNamespace(
+        cuda=fake_cuda,
+        version=SimpleNamespace(cuda="12.4"),
+        backends=SimpleNamespace(cudnn=SimpleNamespace(version=lambda: 9000)),
+    )
+
+    with patch("fovux.core.doctor.importlib.import_module", return_value=fake_torch):
+        gpu = _detect_gpu()
+
+    assert gpu.available is True
+    assert gpu.accelerator == "cuda"
+    assert gpu.device == "RTX Test"
+    assert gpu.memory_free_gb == 8.0
+    assert gpu.memory_total_gb == 24.0
+
+
+def test_doctor_gpu_health_handles_missing_torch() -> None:
+    """GPU detection should degrade cleanly when torch is not installed."""
+    with patch("fovux.core.doctor.importlib.import_module", side_effect=ImportError("missing")):
+        gpu = _detect_gpu()
+
+    assert gpu.available is False
+    assert gpu.accelerator == "cpu"
+    assert "torch is not installed" in gpu.detail
 
 
 def test_model_profile_returns_manual_counts(tmp_path: Path) -> None:

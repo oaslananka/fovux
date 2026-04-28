@@ -4,6 +4,31 @@ All notable changes to `fovux-studio` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.1.1] - 2026-04-28
+
+### Added
+
+- CodeLens actions for YOLO `data.yaml` files.
+- Run folder file decorations for completed, failed, running, and stopped runs.
+- Active-run and session-scoped profile status bar controls.
+- Dataset Inspector panels for missing-label images, bounding-box size buckets, and optional
+  evaluation-backed confusion matrices.
+- Training Launcher preset import-from-run plus JSON import/export.
+- TensorRT GPU target grouping in the Export Wizard with CUDA-aware disabling.
+
+### Changed
+
+- Webview metric subscriptions prefer `/stream`, fall back to `/metrics`, and finally fall back to
+  polling.
+- Annotation Editor state now uses a reducer with draw, select, move, resize, delete, undo, clear,
+  and save operations.
+- ESLint 9 flat config is now explicit and package builds use deterministic bundle-size gates.
+
+### Security
+
+- Workspace trust is declared as limited and untrusted workspaces cannot start the server or launch
+  training.
+
 ## [4.1.0] - 2026-04-27
 
 ### Added

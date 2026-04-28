@@ -3,7 +3,11 @@ import type { CSSProperties, JSX } from "react";
 import { createRoot } from "react-dom/client";
 
 import { getRun, invokeTool, type HttpClientConfig } from "../shared/api";
-import { estimateTrainingMinutes, TRAINING_PRESETS, type TrainingPreset } from "./presets";
+import {
+  estimateTrainingMinutes,
+  TRAINING_PRESETS,
+  type TrainingPreset,
+} from "./presets";
 import {
   postToExtension,
   readInitialState,
@@ -18,6 +22,7 @@ function TrainingLauncherApp(): JSX.Element {
     authToken: null,
     initialModels: [],
     fovuxHome: "",
+    initialDatasetPath: "",
     initialError: "Initial training launcher state was not provided.",
     isServerReachable: false,
     userPresets: [],
@@ -25,12 +30,14 @@ function TrainingLauncherApp(): JSX.Element {
   const [authToken, setAuthToken] = useState<string | null>(initial.authToken);
   const clientConfig = useMemo<HttpClientConfig>(
     () => ({ baseUrl: initial.baseUrl, authToken }),
-    [authToken, initial.baseUrl]
+    [authToken, initial.baseUrl],
   );
 
   const [runName, setRunName] = useState("");
-  const [datasetPath, setDatasetPath] = useState("");
-  const [model, setModel] = useState(initial.initialModels[0]?.path ?? "yolov8n.pt");
+  const [datasetPath, setDatasetPath] = useState(initial.initialDatasetPath);
+  const [model, setModel] = useState(
+    initial.initialModels[0]?.path ?? "yolov8n.pt",
+  );
   const [epochs, setEpochs] = useState(10);
   const [batch, setBatch] = useState(16);
   const [imgsz, setImgsz] = useState(640);
@@ -42,7 +49,10 @@ function TrainingLauncherApp(): JSX.Element {
   const [extraArgs, setExtraArgs] = useState("{}");
   const [error, setError] = useState<string | null>(initial.initialError);
   const [status, setStatus] = useState<string | null>(null);
-  const [userPresets, setUserPresets] = useState<UserPreset[]>(initial.userPresets);
+  const [userPresets, setUserPresets] = useState<UserPreset[]>(
+    initial.userPresets,
+  );
+  const [presetImportJson, setPresetImportJson] = useState("");
   const [recentDatasets, setRecentDatasets] = useState<string[]>(() => {
     const raw = window.localStorage.getItem("fovux.recentDatasets");
     if (!raw) {
@@ -59,7 +69,7 @@ function TrainingLauncherApp(): JSX.Element {
   });
   const roughEtaMinutes = useMemo(
     () => estimateTrainingMinutes(epochs, batch, imgsz),
-    [batch, epochs, imgsz]
+    [batch, epochs, imgsz],
   );
   useEffect(() => {
     const listener = (event: MessageEvent<ExtensionToWebviewMessage>): void => {
@@ -84,8 +94,8 @@ function TrainingLauncherApp(): JSX.Element {
         <p style={eyebrowStyle}>Training Launcher</p>
         <h1 style={titleStyle}>Start a YOLO run without leaving VS Code</h1>
         <p style={ledeStyle}>
-          Pick a dataset, checkpoint, and edge-oriented defaults. Dry-run shows the exact tool
-          payload before it launches anything.
+          Pick a dataset, checkpoint, and edge-oriented defaults. Dry-run shows
+          the exact tool payload before it launches anything.
         </p>
       </header>
 
@@ -93,7 +103,8 @@ function TrainingLauncherApp(): JSX.Element {
         <section style={helperCardStyle}>
           <strong>HTTP server offline</strong>
           <p style={helperTextStyle}>
-            Start the local Fovux server from VS Code, then launch training from this form.
+            Start the local Fovux server from VS Code, then launch training from
+            this form.
           </p>
           <button
             type="button"
@@ -112,7 +123,8 @@ function TrainingLauncherApp(): JSX.Element {
         <div style={titleRowStyle}>
           <strong>Presets</strong>
           <span style={mutedTextStyle}>
-            Rough ETA: ~{roughEtaMinutes} minutes on a typical local workstation.
+            Rough ETA: ~{roughEtaMinutes} minutes on a typical local
+            workstation.
           </span>
         </div>
         <div style={presetGridStyle}>
@@ -146,9 +158,14 @@ function TrainingLauncherApp(): JSX.Element {
                 style={iconButtonStyle}
                 onClick={() => {
                   setUserPresets((presets) =>
-                    presets.filter((candidate) => candidate.name !== preset.name)
+                    presets.filter(
+                      (candidate) => candidate.name !== preset.name,
+                    ),
                   );
-                  postToExtension({ type: "deleteUserPreset", name: preset.name });
+                  postToExtension({
+                    type: "deleteUserPreset",
+                    name: preset.name,
+                  });
                 }}
               >
                 x
@@ -156,6 +173,39 @@ function TrainingLauncherApp(): JSX.Element {
             </div>
           ))}
         </div>
+        <div style={actionRowStyle}>
+          <button
+            type="button"
+            style={secondaryButtonStyle}
+            onClick={() => void importFromRun()}
+          >
+            Import from run
+          </button>
+          <button
+            type="button"
+            style={secondaryButtonStyle}
+            onClick={() => postToExtension({ type: "exportUserPresets" })}
+          >
+            Export presets
+          </button>
+        </div>
+        <label style={fieldStyle}>
+          <span>Import preset JSON</span>
+          <textarea
+            aria-label="Import preset JSON"
+            style={{ ...inputStyle, minHeight: 72 }}
+            value={presetImportJson}
+            onChange={(event) => setPresetImportJson(event.target.value)}
+            placeholder='{"presets":[...]}'
+          />
+        </label>
+        <button
+          type="button"
+          style={secondaryButtonStyle}
+          onClick={() => importPresetJson()}
+        >
+          Import presets
+        </button>
       </section>
 
       <section style={formStyle} aria-label="Training configuration">
@@ -206,9 +256,24 @@ function TrainingLauncherApp(): JSX.Element {
         </label>
 
         <div style={gridStyle}>
-          <NumberField label="Epochs" value={epochs} onChange={setEpochs} min={1} />
-          <NumberField label="Batch" value={batch} onChange={setBatch} min={1} />
-          <NumberField label="Image size" value={imgsz} onChange={setImgsz} min={32} />
+          <NumberField
+            label="Epochs"
+            value={epochs}
+            onChange={setEpochs}
+            min={1}
+          />
+          <NumberField
+            label="Batch"
+            value={batch}
+            onChange={setBatch}
+            min={1}
+          />
+          <NumberField
+            label="Image size"
+            value={imgsz}
+            onChange={setImgsz}
+            min={32}
+          />
           <NumberField
             label="Max concurrent runs"
             value={maxConcurrentRuns}
@@ -268,14 +333,24 @@ function TrainingLauncherApp(): JSX.Element {
             checked={force}
             onChange={(event) => setForce(event.target.checked)}
           />
-          <span>Force overwrite an existing stopped, failed, or complete run</span>
+          <span>
+            Force overwrite an existing stopped, failed, or complete run
+          </span>
         </label>
 
         <div style={actionRowStyle}>
-          <button type="button" style={buttonStyle} onClick={() => void submit()}>
+          <button
+            type="button"
+            style={buttonStyle}
+            onClick={() => void submit()}
+          >
             {dryRun ? "Preview payload" : "Start training"}
           </button>
-          <button type="button" style={secondaryButtonStyle} onClick={() => savePreset()}>
+          <button
+            type="button"
+            style={secondaryButtonStyle}
+            onClick={() => savePreset()}
+          >
             Save preset
           </button>
         </div>
@@ -294,7 +369,7 @@ function TrainingLauncherApp(): JSX.Element {
       const candidateRunName = runName.trim();
       if (candidateRunName && !force && (await runExists(candidateRunName))) {
         setError(
-          `'${candidateRunName}' already exists. Enable force overwrite or choose a different run name.`
+          `'${candidateRunName}' already exists. Enable force overwrite or choose a different run name.`,
         );
         setStatus(null);
         return;
@@ -303,18 +378,23 @@ function TrainingLauncherApp(): JSX.Element {
       const result = await invokeTool<{ run_id: string; run_path: string }>(
         clientConfig,
         "train_start",
-        payload
+        payload,
       );
       const nextRecentDatasets = [
         datasetPath.trim(),
         ...recentDatasets.filter((entry) => entry !== datasetPath.trim()),
       ].slice(0, 5);
       setRecentDatasets(nextRecentDatasets);
-      window.localStorage.setItem("fovux.recentDatasets", JSON.stringify(nextRecentDatasets));
+      window.localStorage.setItem(
+        "fovux.recentDatasets",
+        JSON.stringify(nextRecentDatasets),
+      );
       setStatus(`Started ${result.run_id}. Opening dashboard...`);
       postToExtension({ type: "openDashboard" });
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : String(nextError));
+      setError(
+        nextError instanceof Error ? nextError.message : String(nextError),
+      );
       setStatus(null);
     }
   }
@@ -405,6 +485,96 @@ function TrainingLauncherApp(): JSX.Element {
     postToExtension({ type: "saveUserPreset", preset });
     setStatus(`${preset.name} preset saved.`);
   }
+
+  async function importFromRun(): Promise<void> {
+    const runId = runName.trim();
+    if (!runId) {
+      setError("Enter a run name or run ID before importing from a run.");
+      return;
+    }
+    try {
+      const run = await getRun(clientConfig, runId);
+      if (run.dataset_path) {
+        setDatasetPath(run.dataset_path);
+      }
+      setModel(run.model);
+      setEpochs(run.epochs);
+      setStatus(`Imported configuration from ${run.id}.`);
+      setError(null);
+    } catch (nextError) {
+      setError(
+        nextError instanceof Error ? nextError.message : String(nextError),
+      );
+    }
+  }
+
+  function importPresetJson(): void {
+    try {
+      const presets = parseImportedPresets(presetImportJson);
+      if (!presets.length) {
+        throw new Error("No valid presets found.");
+      }
+      setUserPresets((current) => mergePresets(presets, current));
+      postToExtension({ type: "importUserPresets", presets });
+      setPresetImportJson("");
+      setStatus(
+        `Imported ${presets.length} preset${presets.length === 1 ? "" : "s"}.`,
+      );
+      setError(null);
+    } catch (nextError) {
+      setError(
+        nextError instanceof Error ? nextError.message : String(nextError),
+      );
+    }
+  }
+}
+
+export function parseImportedPresets(rawJson: string): UserPreset[] {
+  const parsed = JSON.parse(rawJson) as unknown;
+  const candidates = Array.isArray(parsed)
+    ? parsed
+    : parsed &&
+        typeof parsed === "object" &&
+        Array.isArray((parsed as { presets?: unknown }).presets)
+      ? (parsed as { presets: unknown[] }).presets
+      : [];
+  return candidates.filter(isUserPreset);
+}
+
+function isUserPreset(value: unknown): value is UserPreset {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  const config = record["config"];
+  if (!config || typeof config !== "object") {
+    return false;
+  }
+  const cfg = config as Record<string, unknown>;
+  return (
+    typeof record["name"] === "string" &&
+    typeof record["createdAt"] === "string" &&
+    typeof cfg["model"] === "string" &&
+    typeof cfg["epochs"] === "number" &&
+    typeof cfg["batch"] === "number" &&
+    typeof cfg["imgsz"] === "number" &&
+    typeof cfg["device"] === "string" &&
+    typeof cfg["tags"] === "string" &&
+    typeof cfg["extraArgs"] === "string" &&
+    typeof cfg["maxConcurrentRuns"] === "number"
+  );
+}
+
+export function mergePresets(
+  imported: UserPreset[],
+  current: UserPreset[],
+): UserPreset[] {
+  return [
+    ...imported,
+    ...current.filter(
+      (candidate) => !imported.some((preset) => preset.name === candidate.name),
+    ),
+  ].slice(0, 20);
 }
 
 function NumberField(props: {
@@ -633,7 +803,8 @@ const successStyle: CSSProperties = {
   border: "1px solid var(--vscode-inputValidation-infoBorder)",
 };
 
-const rootNode = document.getElementById("root");
+const rootNode =
+  typeof document === "undefined" ? null : document.getElementById("root");
 if (rootNode) {
   createRoot(rootNode).render(<TrainingLauncherApp />);
 }

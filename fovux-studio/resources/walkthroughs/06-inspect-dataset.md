@@ -1,9 +1,13 @@
 # Inspect a Dataset
 
-Before training, validate your dataset with the **Dataset Inspector**:
+The Dataset Inspector validates YOLO structure, class distribution, missing labels, and bounding-box shape before training. You can open it from the Command Palette or use the CodeLens actions that appear on a `data.yaml` file.
 
-1. Open the command palette: `Fovux: Dataset Inspector`.
-2. Enter the path to your YOLO dataset.
-3. Review class distribution, image counts, and annotation quality.
+## Steps
 
-You can also use the `fovux_dataset_inspect` tool in Copilot agent mode.
+1. Open `Fovux: Inspect Dataset...` and choose the dataset folder that contains `data.yaml`.
+2. Review class balance, missing-label images, and bounding-box distributions.
+3. Jump to any flagged image or run validation before launching training.
+
+## Next Step
+
+Click the button above to move to the next step.

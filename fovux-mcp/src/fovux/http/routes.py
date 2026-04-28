@@ -3,7 +3,8 @@
 Endpoints:
   GET  /runs                   — list all runs
   GET  /runs/{run_id}          — single run metadata
-  GET  /runs/{run_id}/metrics  — SSE stream of metrics.jsonl lines
+  GET  /runs/{run_id}/stream   — canonical SSE stream of metrics.jsonl lines
+  GET  /runs/{run_id}/metrics  — compatibility SSE stream of metrics.jsonl lines
   POST /tools/{name}           — proxy to MCP tool call
 """
 
@@ -147,6 +148,8 @@ async def get_run(run_id: str) -> JSONResponse:
 
 
 class RunsSearchInput(BaseModel):
+    """Input payload for run search filters."""
+
     query: str | None = None
     tags: list[str] = []
     status: list[str] = []
@@ -209,9 +212,19 @@ async def search_runs(body: RunsSearchInput) -> JSONResponse:
     return JSONResponse(matched)
 
 
-@router.get("/runs/{run_id}/metrics")
+@router.get("/runs/{run_id}/stream")
 async def stream_run_metrics(run_id: str, request: Request) -> StreamingResponse:
     """Stream normalized metric rows for a run over server-sent events."""
+    return _stream_run_metrics_response(run_id, request)
+
+
+@router.get("/runs/{run_id}/metrics")
+async def stream_run_metrics_compat(run_id: str, request: Request) -> StreamingResponse:
+    """Compatibility alias for the canonical run metric stream."""
+    return _stream_run_metrics_response(run_id, request)
+
+
+def _stream_run_metrics_response(run_id: str, request: Request) -> StreamingResponse:
     run_dir = _resolve_run_dir(run_id)
     shutdown_event = cast(asyncio.Event, request.app.state.shutdown_event)
 
@@ -285,6 +298,9 @@ async def _metric_event_stream(
     emitted_count = len(snapshot)
     if metrics_jsonl.exists():
         jsonl_offset = metrics_jsonl.stat().st_size
+    if _is_terminal_run(run_dir):
+        yield "event: done\ndata: {}\n\n"
+        return
 
     watcher = awatch(run_dir, stop_event=shutdown_event, debounce=150)
     last_heartbeat = time.monotonic()
@@ -315,6 +331,10 @@ async def _metric_event_stream(
         for payload in delta_payloads:
             yield f"event: metric\ndata: {json.dumps(payload)}\n\n"
             last_heartbeat = time.monotonic()
+
+        if _is_terminal_run(run_dir):
+            yield "event: done\ndata: {}\n\n"
+            break
 
         if time.monotonic() - last_heartbeat >= 15.0:
             yield ": keep-alive\n\n"
@@ -380,12 +400,17 @@ def _load_metric_payload_delta(
         delta_payloads.append(
             {
                 "runId": str(raw.get("run_id", run_id)),
-                "epoch": int(epoch_value) if isinstance(epoch_value, (int, float, str)) else 0,
+                "epoch": int(epoch_value) if isinstance(epoch_value, int | float | str) else 0,
                 "metrics": {
                     str(key): float(value)
                     for key, value in metrics.items()
-                    if isinstance(value, (int, float))
+                    if isinstance(value, int | float)
                 },
             }
         )
     return emitted_count + len(delta_payloads), current_size, delta_payloads
+
+
+def _is_terminal_run(run_dir: Path) -> bool:
+    status = str(_read_status_payload(run_dir).get("status", "")).lower()
+    return status in {"complete", "completed", "failed", "stopped"}

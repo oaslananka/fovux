@@ -108,6 +108,7 @@ def _detect_gpu() -> GpuHealth:
         device_name = (
             cuda.get_device_name(0) if callable(getattr(cuda, "get_device_name", None)) else None
         )
+        memory_free_gb, memory_total_gb = _torch_cuda_memory_gb(cuda)
         return GpuHealth(
             available=True,
             accelerator="cuda",
@@ -115,6 +116,8 @@ def _detect_gpu() -> GpuHealth:
             detail="CUDA is available",
             cuda_version=str(getattr(torch.version, "cuda", "")) or None,
             cudnn_version=_torch_cudnn_version(torch),
+            memory_free_gb=memory_free_gb,
+            memory_total_gb=memory_total_gb,
         )
 
     backends = getattr(torch, "backends", None)
@@ -228,6 +231,17 @@ def _torch_cudnn_version(torch: object) -> str | None:
         value = version()
         return str(value) if value is not None else None
     return None
+
+
+def _torch_cuda_memory_gb(cuda: object) -> tuple[float | None, float | None]:
+    mem_get_info = getattr(cuda, "mem_get_info", None)
+    if not callable(mem_get_info):
+        return None, None
+    try:
+        free_bytes, total_bytes = mem_get_info()
+    except Exception:
+        return None, None
+    return round(float(free_bytes) / (1024**3), 2), round(float(total_bytes) / (1024**3), 2)
 
 
 def _is_writable(path: Path) -> bool:

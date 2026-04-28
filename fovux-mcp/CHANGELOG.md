@@ -5,6 +5,28 @@ All notable changes to `fovux-mcp` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [4.1.1] - 2026-04-28
+
+### Added
+
+- Canonical `/runs/{run_id}/stream` SSE metrics endpoint while preserving `/runs/{run_id}/metrics`.
+- Dataset inspection fields for missing-label images and normalized bounding-box size buckets.
+- GPU memory details in structured doctor diagnostics.
+
+### Changed
+
+- Coverage enforcement is raised to 92% with focused tests for export, eval, benchmark, dataset,
+  doctor, and HTTP streaming behavior.
+- The container image installs only the runtime system package it needs (`libgomp1`) and upgrades
+  pip to a pinned non-vulnerable version during image build.
+
+### Security
+
+- Trivy image scanning now ignores upstream-unfixed Debian CVEs with no fixed package available,
+  while still failing on actionable fixed CRITICAL/HIGH vulnerabilities.
+- Removed unnecessary Mesa/OpenGL package installation from the runtime image, closing the critical
+  Mesa code-scanning alerts produced by the previous image.
+
 ## [4.1.0] - 2026-04-27
 
 ### Added

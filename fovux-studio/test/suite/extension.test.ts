@@ -14,8 +14,10 @@ import { copyRunId } from "../../src/commands/runActions";
 import {
   createdPanels,
   createdTreeViews,
+  registeredCodeLensProviders,
   registeredCommandHandlers,
   registeredCommands,
+  registeredFileDecorationProviders,
   resetVscodeMockState,
 } from "./helpers/vscodeMock";
 import { ExportsTreeProvider } from "../../src/views/exportsTree";
@@ -40,7 +42,10 @@ describe("Fovux Studio extension", () => {
   });
 
   it("registers all user-facing commands on activate", async () => {
-    const context = { extensionUri: { path: "/extension" }, subscriptions: [] as Array<unknown> };
+    const context = {
+      extensionUri: { path: "/extension" },
+      subscriptions: [] as Array<unknown>,
+    };
     activate(context as never);
 
     expect(registeredCommands).toEqual(
@@ -59,15 +64,32 @@ describe("Fovux Studio extension", () => {
         "fovux.deleteRun",
         "fovux.tagRun",
         "fovux.selectProfile",
-      ])
+        "fovux.installBackend",
+        "fovux.runDoctor",
+        "fovux.openUpgradeGuide",
+        "fovux.openSecurityDoc",
+        "fovux.validateDataset",
+        "fovux.refreshDoctor",
+        "fovux.fixDoctorCheck",
+      ]),
     );
     expect(createdTreeViews.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining(["fovux.runsView", "fovux.modelsView", "fovux.exportsView"])
+      expect.arrayContaining([
+        "fovux.runsView",
+        "fovux.modelsView",
+        "fovux.exportsView",
+        "fovux.doctorView",
+      ]),
     );
+    expect(registeredFileDecorationProviders).toHaveLength(1);
+    expect(registeredCodeLensProviders).toHaveLength(1);
   });
 
   it("creates a script-enabled dashboard webview", async () => {
-    const context = { extensionUri: { path: "/extension" }, subscriptions: [] as Array<unknown> };
+    const context = {
+      extensionUri: { path: "/extension" },
+      subscriptions: [] as Array<unknown>,
+    };
     tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fovux-dashboard-auth-"));
     process.env["FOVUX_HOME"] = tempHome;
     fs.writeFileSync(path.join(tempHome, "auth.token"), "secret-token\n");
@@ -84,25 +106,32 @@ describe("Fovux Studio extension", () => {
           };
         }
         return { ok: false, status: 404, statusText: "Not Found" };
-      })
+      }),
     );
 
     await openDashboard(context as never);
 
     expect(createdPanels).toHaveLength(1);
     expect(createdPanels[0]?.options["enableScripts"]).toBe(true);
-    expect(createdPanels[0]?.options["localResourceRoots"]).toEqual([{ path: "/extension" }]);
-    expect(createdPanels[0]?.panel.webview.html).toContain("webviews/dashboard/main.js");
+    expect(createdPanels[0]?.options["localResourceRoots"]).toEqual([
+      { path: "/extension" },
+    ]);
+    expect(createdPanels[0]?.panel.webview.html).toContain(
+      "webviews/dashboard/main.js",
+    );
   });
 
   it("sets local resource roots for all script-enabled webviews", async () => {
-    const context = { extensionUri: { path: "/extension" }, subscriptions: [] as Array<unknown> };
+    const context = {
+      extensionUri: { path: "/extension" },
+      subscriptions: [] as Array<unknown>,
+    };
     tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fovux-webviews-auth-"));
     process.env["FOVUX_HOME"] = tempHome;
     fs.writeFileSync(path.join(tempHome, "auth.token"), "secret-token\n");
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => ({ ok: false, status: 503, statusText: "Offline" }))
+      vi.fn(async () => ({ ok: false, status: 503, statusText: "Offline" })),
     );
 
     await openDashboard(context as never);
@@ -113,7 +142,9 @@ describe("Fovux Studio extension", () => {
     expect(createdPanels).toHaveLength(4);
     for (const panel of createdPanels) {
       expect(panel.options["enableScripts"]).toBe(true);
-      expect(panel.options["localResourceRoots"]).toEqual([{ path: "/extension" }]);
+      expect(panel.options["localResourceRoots"]).toEqual([
+        { path: "/extension" },
+      ]);
     }
   });
 
@@ -124,7 +155,7 @@ describe("Fovux Studio extension", () => {
     fs.mkdirSync(runDir, { recursive: true });
     fs.writeFileSync(
       path.join(runDir, "status.json"),
-      JSON.stringify({ status: "running", current_epoch: 1, total_epochs: 5 })
+      JSON.stringify({ status: "running", current_epoch: 1, total_epochs: 5 }),
     );
 
     const provider = new RunsTreeProvider();
@@ -137,26 +168,57 @@ describe("Fovux Studio extension", () => {
 
   it("shows an error when copying a run ID fails", async () => {
     const vscode = await import("vscode");
-    vi.mocked(vscode.env.clipboard.writeText).mockRejectedValueOnce(new Error("clipboard denied"));
+    vi.mocked(vscode.env.clipboard.writeText).mockRejectedValueOnce(
+      new Error("clipboard denied"),
+    );
 
     await copyRunId({ runId: "run_demo" } as never);
 
     expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-      "Could not copy run_demo: clipboard denied"
+      "Could not copy run_demo: clipboard denied",
     );
   });
 
   it("declares revealPath as a contributed command", () => {
     const packageJson = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8")
+      fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
     );
-    const commands = packageJson.contributes.commands as Array<{ command: string }>;
+    const commands = packageJson.contributes.commands as Array<{
+      command: string;
+      enablement?: string;
+    }>;
+    const contributedIds = commands.map((command) => command.command);
 
-    expect(commands.map((command) => command.command)).toContain("fovux.revealPath");
+    expect(contributedIds).toEqual(
+      expect.arrayContaining([
+        "fovux.revealPath",
+        "fovux.installBackend",
+        "fovux.runDoctor",
+        "fovux.openUpgradeGuide",
+        "fovux.openSecurityDoc",
+        "fovux.validateDataset",
+      ]),
+    );
+    expect(
+      commands.find((command) => command.command === "fovux.revealPath")
+        ?.enablement,
+    ).toBeUndefined();
+    expect(packageJson.capabilities.untrustedWorkspaces.supported).toBe(
+      "limited",
+    );
+    expect(packageJson.contributes.keybindings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ command: "fovux.startTraining" }),
+        expect.objectContaining({ command: "fovux.openDashboard" }),
+      ]),
+    );
   });
 
   it("refreshes runs, models, and exports from refreshViews", () => {
-    const context = { extensionUri: { path: "/extension" }, subscriptions: [] as Array<unknown> };
+    const context = {
+      extensionUri: { path: "/extension" },
+      subscriptions: [] as Array<unknown>,
+    };
     const runsRefresh = vi.spyOn(RunsTreeProvider.prototype, "refresh");
     const modelsRefresh = vi.spyOn(ModelsTreeProvider.prototype, "refresh");
     const exportsRefresh = vi.spyOn(ExportsTreeProvider.prototype, "refresh");

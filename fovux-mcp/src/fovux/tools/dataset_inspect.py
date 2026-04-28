@@ -11,7 +11,6 @@ from fovux.core.dataset_utils import (
     detect_format,
     find_coco_jsons,
     gini,
-    iter_yolo_labels,
     parse_yolo_label,
     read_coco_json,
     read_yolo_data_yaml,
@@ -108,25 +107,29 @@ def _inspect_yolo(
     bbox_counts_per_image: list[int] = []
     orphan_images = 0
     orphan_annotations = 0
+    missing_label_images: list[Path] = []
     image_sizes: list[tuple[int, int]] = []
     sample_paths: list[Path] = []
     total_images = 0
     total_annotations = 0
-    pair_count = 0
+    labels_dir = path / "labels"
+    image_paths = _discover_yolo_images(path)[: inp.max_images_analyzed]
 
-    for img_path, label_path in iter_yolo_labels(path):
-        if pair_count >= inp.max_images_analyzed:
-            break
-        pair_count += 1
+    if labels_dir.is_dir():
+        for label_path in sorted(labels_dir.rglob("*.txt")):
+            if not _matching_yolo_image_exists(path, label_path):
+                orphan_annotations += 1
+
+    for img_path in image_paths:
+        label_path = _label_path_for_image(path, img_path)
         total_images += 1
 
-        img_exists = img_path.exists()
+        img_exists = True
         label_exists = label_path.exists()
 
-        if not img_exists and label_exists:
-            orphan_annotations += 1
         if img_exists and not label_exists:
             orphan_images += 1
+            missing_label_images.append(img_path)
 
         if img_exists and len(sample_paths) < 10 and inp.include_samples:
             sample_paths.append(img_path)
@@ -177,8 +180,10 @@ def _inspect_yolo(
         classes=classes,
         image_size_distribution=img_size_hist,
         bbox_size_distribution=bbox_size_hist,
+        bbox_size_buckets=_normalized_bbox_size_buckets(bbox_areas),
         bbox_count_per_image=bbox_count_hist,
         orphan_images=orphan_images,
+        missing_label_images=missing_label_images,
         orphan_annotations=orphan_annotations,
         class_balance_gini=gini(list(class_counts.values())),
         splits_detected=splits_detected,
@@ -260,8 +265,10 @@ def _inspect_coco(
         classes=classes,
         image_size_distribution=SizeHistogram(buckets=["N/A"], counts=[total_images]),
         bbox_size_distribution=SizeHistogram(buckets=bal or ["N/A"], counts=bac or [0]),
+        bbox_size_buckets={},
         bbox_count_per_image=Histogram(buckets=bcl or ["0"], counts=bcc or [0]),
         orphan_images=0,
+        missing_label_images=[],
         orphan_annotations=0,
         class_balance_gini=gini(list(class_counts.values())),
         splits_detected=splits_detected,
@@ -269,3 +276,42 @@ def _inspect_coco(
         sample_paths=sample_paths,
         analysis_duration_seconds=round(time.perf_counter() - t0, 3),
     )
+
+
+def _discover_yolo_images(dataset_path: Path) -> list[Path]:
+    images_root = dataset_path / "images"
+    if not images_root.is_dir():
+        return []
+    return sorted(path for path in images_root.rglob("*") if path.suffix.lower() in _IMAGE_EXTS)
+
+
+def _label_path_for_image(dataset_path: Path, image_path: Path) -> Path:
+    images_root = dataset_path / "images"
+    labels_root = dataset_path / "labels"
+    try:
+        relative = image_path.relative_to(images_root)
+    except ValueError:
+        relative = Path(image_path.name)
+    return labels_root / relative.with_suffix(".txt")
+
+
+def _matching_yolo_image_exists(dataset_path: Path, label_path: Path) -> bool:
+    labels_root = dataset_path / "labels"
+    images_root = dataset_path / "images"
+    try:
+        relative = label_path.relative_to(labels_root).with_suffix("")
+    except ValueError:
+        relative = Path(label_path.stem)
+    return any((images_root / relative).with_suffix(ext).exists() for ext in _IMAGE_EXTS)
+
+
+def _normalized_bbox_size_buckets(areas: list[float]) -> dict[str, int]:
+    buckets = {"small": 0, "medium": 0, "large": 0}
+    for area in areas:
+        if area < 0.01:
+            buckets["small"] += 1
+        elif area < 0.10:
+            buckets["medium"] += 1
+        else:
+            buckets["large"] += 1
+    return buckets

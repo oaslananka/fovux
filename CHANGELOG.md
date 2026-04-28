@@ -4,6 +4,54 @@ All notable changes to Fovux are documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
+## [4.1.1] - 2026-04-28
+
+### Added
+
+- Canonical `/runs/{id}/stream` SSE metric endpoint with `/runs/{id}/metrics` kept as a
+  compatibility alias.
+- Fovux Studio CodeLens actions for YOLO `data.yaml` files.
+- Run folder file decorations for completed, failed, running, and stopped runs.
+- Active-run and profile status bar items with session-scoped profile switching.
+- Dataset Inspector missing-label and bbox-size panels, plus optional evaluation-backed confusion
+  matrix rendering.
+- Training Launcher user preset JSON import/export and import-from-run support.
+- Export Wizard GPU target grouping with TensorRT visibility and CUDA-aware disabling.
+- Reducer-driven Annotation Editor support for draw, select, move, resize, delete, undo, clear, and
+  YOLO label save.
+- Dependabot minor/patch auto-merge workflow guarded to Dependabot PRs in the org repository.
+- SPDX JSON SBOM generation and release artifact upload.
+
+### Changed
+
+- Studio now supports Node.js >= 22 while release builds remain pinned to `.nvmrc` (`24.14.1`).
+- CI installs are deterministic: frozen pnpm installs, explicit pnpm 10.33.0, non-suppressed
+  yamllint, and current action majors.
+- Python coverage threshold is raised to 92% with previously omitted export, eval, benchmark, and
+  HTTP route modules covered by focused tests.
+- `fovux-mcp` and `fovux` CLI aliases are documented as intentional entry points.
+- Release verification now treats `[Unreleased]` as a release-cut blocker rather than a PR blocker.
+
+### Fixed
+
+- Removed the fragile `pnpm.overrides.uuid` override while keeping the lockfile frozen-compatible.
+- Added missing contributed Studio commands for walkthrough actions and dataset validation.
+- Removed the invalid `enablement: "false"` manifest entry from `fovux.revealPath`.
+- Backend install walkthrough action now prefers `uv tool install fovux-mcp` before falling back to
+  `pip install fovux-mcp`.
+- `nightly-compat.yml` now uses setup-uv and writes a compatibility report consumed by issue
+  creation on failure.
+- `verify_doppler_secrets.sh` now fails early with a clear message when the Doppler CLI is missing.
+
+### Security
+
+- Workspace trust is declared as limited; server startup and training launch are blocked in
+  untrusted workspaces.
+- Local metric streams preserve bearer-token auth and rate behavior.
+- The `fovux-mcp` container image no longer installs GUI OpenGL/Mesa packages and the Trivy
+  workflow now fails on actionable fixed CRITICAL/HIGH findings while ignoring upstream-unfixed
+  Debian CVEs that have no patched package available.
+
 ## [4.1.0] - 2026-04-27
 
 ### Added

@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  uuid: 14.0.0
-
 importers:
   .:
     dependencies:
@@ -18,8 +15,8 @@ importers:
         version: 19.2.5(react@19.2.5)
     devDependencies:
       "@types/node":
-        specifier: ^24.12.2
-        version: 24.12.2
+        specifier: ^22.19.17
+        version: 22.19.17
       "@types/react":
         specifier: ^19.2.14
         version: 19.2.14
@@ -55,7 +52,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^4.1.5
-        version: 4.1.5(@types/node@24.12.2)(vite@8.0.9(@types/node@24.12.2)(esbuild@0.27.7))
+        version: 4.1.5(@types/node@22.19.17)(vite@8.0.9(@types/node@22.19.17)(esbuild@0.27.7))
 
 packages:
   "@azu/format-text@1.0.2":
@@ -1094,10 +1091,10 @@ packages:
         integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==,
       }
 
-  "@types/node@24.12.2":
+  "@types/node@22.19.17":
     resolution:
       {
-        integrity: sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==,
+        integrity: sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==,
       }
 
   "@types/normalize-package-data@2.4.4":
@@ -4408,10 +4405,10 @@ packages:
         integrity: sha512-DXtD3ZtEQzc7M8m4cXotyHR+FAS18C64asBYY5vqZexfYryNNnDc02W4hKg3rdQuqOYas1jkseX0+nZXjTXnvQ==,
       }
 
-  undici-types@7.16.0:
+  undici-types@6.21.0:
     resolution:
       {
-        integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==,
+        integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==,
       }
 
   undici@7.25.0:
@@ -4460,10 +4457,10 @@ packages:
         integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==,
       }
 
-  uuid@14.0.0:
+  uuid@8.3.2:
     resolution:
       {
-        integrity: sha512-Qo+uWgilfSmAhXCMav1uYFynlQO7fMFiMVZsQqZRMIXp0O7rR7qjkj+cPvBHLgBqi960QCoo/PH2/6ZtVqKvrg==,
+        integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==,
       }
     hasBin: true
 
@@ -4777,7 +4774,7 @@ snapshots:
     dependencies:
       "@azure/msal-common": 16.5.0
       jsonwebtoken: 9.0.3
-      uuid: 14.0.0
+      uuid: 8.3.2
 
   "@babel/code-frame@7.29.0":
     dependencies:
@@ -5229,9 +5226,9 @@ snapshots:
 
   "@types/json-schema@7.0.15": {}
 
-  "@types/node@24.12.2":
+  "@types/node@22.19.17":
     dependencies:
-      undici-types: 7.16.0
+      undici-types: 6.21.0
 
   "@types/normalize-package-data@2.4.4": {}
 
@@ -5355,13 +5352,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  "@vitest/mocker@4.1.5(vite@8.0.9(@types/node@24.12.2)(esbuild@0.27.7))":
+  "@vitest/mocker@4.1.5(vite@8.0.9(@types/node@22.19.17)(esbuild@0.27.7))":
     dependencies:
       "@vitest/spy": 4.1.5
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.0.9(@types/node@24.12.2)(esbuild@0.27.7)
+      vite: 8.0.9(@types/node@22.19.17)(esbuild@0.27.7)
 
   "@vitest/pretty-format@4.1.5":
     dependencies:
@@ -7482,7 +7479,7 @@ snapshots:
 
   underscore@1.13.8: {}
 
-  undici-types@7.16.0: {}
+  undici-types@6.21.0: {}
 
   undici@7.25.0: {}
 
@@ -7501,7 +7498,7 @@ snapshots:
   util-deprecate@1.0.2:
     optional: true
 
-  uuid@14.0.0: {}
+  uuid@8.3.2: {}
 
   validate-npm-package-license@3.0.4:
     dependencies:
@@ -7510,7 +7507,7 @@ snapshots:
 
   version-range@4.15.0: {}
 
-  vite@8.0.9(@types/node@24.12.2)(esbuild@0.27.7):
+  vite@8.0.9(@types/node@22.19.17)(esbuild@0.27.7):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -7518,14 +7515,14 @@ snapshots:
       rolldown: 1.0.0-rc.16
       tinyglobby: 0.2.16
     optionalDependencies:
-      "@types/node": 24.12.2
+      "@types/node": 22.19.17
       esbuild: 0.27.7
       fsevents: 2.3.3
 
-  vitest@4.1.5(@types/node@24.12.2)(vite@8.0.9(@types/node@24.12.2)(esbuild@0.27.7)):
+  vitest@4.1.5(@types/node@22.19.17)(vite@8.0.9(@types/node@22.19.17)(esbuild@0.27.7)):
     dependencies:
       "@vitest/expect": 4.1.5
-      "@vitest/mocker": 4.1.5(vite@8.0.9(@types/node@24.12.2)(esbuild@0.27.7))
+      "@vitest/mocker": 4.1.5(vite@8.0.9(@types/node@22.19.17)(esbuild@0.27.7))
       "@vitest/pretty-format": 4.1.5
       "@vitest/runner": 4.1.5
       "@vitest/snapshot": 4.1.5
@@ -7542,10 +7539,10 @@ snapshots:
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vite: 8.0.9(@types/node@24.12.2)(esbuild@0.27.7)
+      vite: 8.0.9(@types/node@22.19.17)(esbuild@0.27.7)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      "@types/node": 24.12.2
+      "@types/node": 22.19.17
     transitivePeerDependencies:
       - msw
 
