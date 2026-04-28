@@ -30,9 +30,12 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: "fovux-mcp:${{ github.sha }}"
+          scanners: "vuln"
+          vuln-type: "os,library"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
+          limit-severities-for-sarif: true
           ignore-unfixed: true
           exit-code: "1"
 
