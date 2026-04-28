@@ -79,7 +79,7 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: 'fovux-mcp/dist/*'
-          
+
       - name: Build provenance attestation (Node)
         if: hashFiles('fovux-studio/*.vsix') != ''
         uses: actions/attest-build-provenance@v2

@@ -22,6 +22,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
+          cache: false
       - name: Install Gitleaks
         run: go install github.com/zricethezav/gitleaks/v8@latest
       - name: Gitleaks scan
