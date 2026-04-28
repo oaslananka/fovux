@@ -1,0 +1,29 @@
+name: Gitleaks
+
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    if: github.repository == 'oaslananka-lab/fovux'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+      - name: Install Gitleaks
+        run: go install github.com/zricethezav/gitleaks/v8@latest
+      - name: Gitleaks scan
+        run: gitleaks detect --no-banner --redact

@@ -1,6 +1,7 @@
 name: Scorecard supply-chain security
 on:
   branch_protection_rule:
+  workflow_dispatch:
   schedule:
     - cron: '20 7 * * 2'
   push:
@@ -10,9 +11,9 @@ permissions: read-all
 
 jobs:
   analysis:
+    if: github.repository == 'oaslananka-lab/fovux' && github.ref == 'refs/heads/main'
     name: Scorecard analysis
     runs-on: ubuntu-latest
-    if: github.repository == 'oaslananka-lab/fovux'
     permissions:
       security-events: write
       id-token: write

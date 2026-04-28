@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_slow:
+        description: "Run slow backend validation"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+  schedule:
+    - cron: "17 2 * * *"
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    if: github.repository == 'oaslananka-lab/fovux'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        if: hashFiles('fovux-mcp/pyproject.toml') != ''
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: astral-sh/setup-uv@v5
+        if: hashFiles('fovux-mcp/pyproject.toml') != ''
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v4
+        if: hashFiles('fovux-studio/package.json') != ''
+        with:
+          node-version-file: 'fovux-studio/package.json'
+
+      - name: Install dependencies
+        run: task install
+
+      - name: Run CI
+        run: task ci
+
+      - name: Publish test results
+        if: always() && runner.os == 'Linux' && hashFiles('**/junit.xml', '**/test-results.xml') != ''
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: |
+            **/junit.xml
+            **/test-results.xml
+
+      - name: Test summary
+        if: always() && hashFiles('**/junit.xml') != ''
+        uses: test-summary/action@v2
+        with:
+          paths: "**/junit.xml"

@@ -1,0 +1,29 @@
+name: Hadolint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  hadolint:
+    if: github.repository == 'oaslananka-lab/fovux'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: fovux-mcp/Dockerfile
+          format: sarif
+          output-file: hadolint-results.sarif
+      - name: Upload analysis results
+        uses: github/codeql-action/upload-sarif@v3
+        if: success() || failure()
+        with:
+          sarif_file: hadolint-results.sarif

@@ -1,0 +1,70 @@
+name: Lint (fast)
+
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  meta:
+    if: github.repository == 'oaslananka-lab/fovux'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        uses: raven-actions/actionlint@v2
+        with:
+          fail-on-error: true
+      - name: yamllint
+        run: |
+          pipx install yamllint || pip install --user yamllint
+          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .github/ || true
+
+  python:
+    if: github.repository == 'oaslananka-lab/fovux'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uvx ruff check fovux-mcp
+      - run: uvx ruff format --check fovux-mcp
+
+  node:
+    if: github.repository == 'oaslananka-lab/fovux'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: fovux-studio/package.json
+      - run: corepack enable
+      - name: Detect package manager and install
+        id: pm
+        run: |
+          cd fovux-studio
+          if [ -f pnpm-lock.yaml ]; then echo "cmd=pnpm" >> "$GITHUB_OUTPUT"
+          elif [ -f yarn.lock ]; then echo "cmd=yarn" >> "$GITHUB_OUTPUT"
+          else echo "cmd=npm" >> "$GITHUB_OUTPUT"; fi
+      - run: |
+          cd fovux-studio
+          ${{ steps.pm.outputs.cmd }} install --frozen-lockfile || ${{ steps.pm.outputs.cmd }} install
+      - name: Lint (if defined)
+        run: |
+          cd fovux-studio
+          if node -e "process.exit(require('./package.json').scripts?.lint?0:1)"; then
+            ${{ steps.pm.outputs.cmd }} run lint
+          else
+            echo "No lint script; skipping."
+          fi
