@@ -29,7 +29,7 @@ jobs:
           yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .github/ || true
 
   python:
-    if: github.repository == 'oaslananka-lab/fovux' && hashFiles('fovux-mcp/pyproject.toml') != ''
+    if: github.repository == 'oaslananka-lab/fovux'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -41,7 +41,7 @@ jobs:
       - run: uvx ruff format --check fovux-mcp
 
   node:
-    if: github.repository == 'oaslananka-lab/fovux' && hashFiles('fovux-studio/package.json') != ''
+    if: github.repository == 'oaslananka-lab/fovux'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

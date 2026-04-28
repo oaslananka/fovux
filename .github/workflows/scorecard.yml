@@ -13,7 +13,6 @@ jobs:
     if: github.repository == 'oaslananka-lab/fovux'
     name: Scorecard analysis
     runs-on: ubuntu-latest
-    if: github.repository == 'oaslananka-lab/fovux'
     permissions:
       security-events: write
       id-token: write
