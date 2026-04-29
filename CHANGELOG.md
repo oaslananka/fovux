@@ -4,6 +4,13 @@ All notable changes to Fovux are documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
+## [4.1.4] - 2026-04-29
+
+### Changed
+
+- Republish Fovux Studio with the current Marketplace README screenshot URLs pointing at the
+  tracked `fovux-studio/resources/screenshots/` assets on `main`.
+
 ## [4.1.3] - 2026-04-29
 
 ### Security

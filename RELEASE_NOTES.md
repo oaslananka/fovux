@@ -1,8 +1,7 @@
-# Fovux 4.1.3 Release Notes
+# Fovux 4.1.4 Release Notes
 
-Fovux 4.1.3 is the final patch release for the verified 4.1.x overhaul. It keeps the Studio and
-backend feature set intact while publishing the last supply-chain hardening pass from the verified
-main branch.
+Fovux 4.1.4 is a patch release that republishes Fovux Studio with the current Marketplace README
+screenshot URLs and keeps the backend version aligned for the monorepo release train.
 
 ## Headline Wins
 
@@ -14,6 +13,8 @@ main branch.
   rechecked after the patch and are clean on the authoritative repository.
 - **Pinned supply chain.** GitHub Actions dependencies are pinned to immutable commit SHAs and the
   runtime Docker base image is pinned by digest.
+- **Marketplace screenshot paths.** Studio README screenshots resolve to the tracked
+  `fovux-studio/resources/screenshots/` assets on `main`.
 - **Canonical run streaming.** `/runs/{id}/stream` is now the preferred SSE metrics endpoint, with
   `/runs/{id}/metrics` kept as a compatibility alias.
 - **Studio integration polish.** CodeLens actions, run folder decorations, active-run counters,
@@ -57,6 +58,7 @@ pnpm verify
 
 ## Previous Release Notes
 
+- [4.1.3](docs/release-notes/4.1.3.md)
 - [4.1.2](docs/release-notes/4.1.2.md)
 - [4.1.1](docs/release-notes/4.1.1.md)
 - [4.1.0](docs/release-notes/4.1.0.md)

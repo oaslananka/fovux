@@ -5,6 +5,12 @@ All notable changes to `fovux-mcp` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [4.1.4] - 2026-04-29
+
+### Changed
+
+- Version-aligned patch release with Fovux Studio 4.1.4.
+
 ## [4.1.3] - 2026-04-29
 
 ### Security

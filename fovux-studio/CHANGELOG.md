@@ -4,6 +4,12 @@ All notable changes to `fovux-studio` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.1.4] - 2026-04-29
+
+### Changed
+
+- Republished the VSIX with the current README screenshot URLs for Marketplace/Open VSX rendering.
+
 ## [4.1.3] - 2026-04-29
 
 ### Security
