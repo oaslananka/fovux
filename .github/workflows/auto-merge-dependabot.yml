@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Wait for representative CI to pass
-        uses: lewagon/wait-on-check-action@v1.7.0
+        uses: lewagon/wait-on-check-action@9312864dfbc9fd208e9c0417843430751c042800
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           check-name: "ci / ci (ubuntu-latest, 3.12, 24.14.1)"
@@ -26,7 +26,7 @@ jobs:
           wait-interval: 30
 
       - name: Auto-merge minor and patch updates
-        uses: fastify/github-action-merge-dependabot@v3.12.0
+        uses: fastify/github-action-merge-dependabot@30c3f8f14a4f7b315ba38dbc1b793d27128fef82
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           merge-method: squash
