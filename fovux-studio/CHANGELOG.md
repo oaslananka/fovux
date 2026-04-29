@@ -4,6 +4,13 @@ All notable changes to `fovux-studio` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.1.3] - 2026-04-29
+
+### Security
+
+- Pin every GitHub Actions dependency used by Studio CI/release checks to immutable SHAs.
+- Keep Scorecard as a published advisory signal without creating code-scanning policy noise.
+
 ## [4.1.2] - 2026-04-29
 
 ### Changed

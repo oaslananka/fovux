@@ -5,6 +5,14 @@ All notable changes to `fovux-mcp` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [4.1.3] - 2026-04-29
+
+### Security
+
+- Pin the Docker base image by digest so image builds are reproducible and Trivy scans the exact
+  release runtime surface.
+- Revalidated the backend package and runtime image after the final supply-chain hardening pass.
+
 ## [4.1.2] - 2026-04-29
 
 ### Fixed

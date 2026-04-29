@@ -4,6 +4,17 @@ All notable changes to Fovux are documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
+## [4.1.3] - 2026-04-29
+
+### Security
+
+- Pin GitHub Actions dependencies and the Python runtime container base image to immutable commit
+  and digest references for a fully reproducible supply-chain surface.
+- Move Scorecard results out of code-scanning SARIF so policy/advisory checks no longer mask the
+  actionable CodeQL and Trivy vulnerability queues.
+- Revalidated the authoritative repository after hardening: Dependabot, CodeQL, Trivy, and code
+  scanning open alerts are clean.
+
 ## [4.1.2] - 2026-04-29
 
 ### Fixed

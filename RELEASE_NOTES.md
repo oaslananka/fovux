@@ -1,8 +1,8 @@
-# Fovux 4.1.2 Release Notes
+# Fovux 4.1.3 Release Notes
 
-Fovux 4.1.2 is a patch release on top of the 4.1.1 release-readiness overhaul. It keeps the
-Studio and backend feature set intact while publishing the final CI runner hardening and
-dataset-path security fix from the verified main branch.
+Fovux 4.1.3 is the final patch release for the verified 4.1.x overhaul. It keeps the Studio and
+backend feature set intact while publishing the last supply-chain hardening pass from the verified
+main branch.
 
 ## Headline Wins
 
@@ -10,8 +10,10 @@ dataset-path security fix from the verified main branch.
   arbitrary filesystem root when a fuzzed input points at `/` or a drive root.
 - **Stable CI package setup.** GitHub Actions install pinned `pnpm@10.33.0` through npm instead of
   Corepack activation, avoiding Windows/Node 22 runner hangs.
-- **Clean security surface.** Dependabot, Trivy, and CodeQL actionable alerts were rechecked after
-  the patch and are clean on the authoritative repository.
+- **Clean security surface.** Dependabot, Trivy, CodeQL, and code-scanning open alerts were
+  rechecked after the patch and are clean on the authoritative repository.
+- **Pinned supply chain.** GitHub Actions dependencies are pinned to immutable commit SHAs and the
+  runtime Docker base image is pinned by digest.
 - **Canonical run streaming.** `/runs/{id}/stream` is now the preferred SSE metrics endpoint, with
   `/runs/{id}/metrics` kept as a compatibility alias.
 - **Studio integration polish.** CodeLens actions, run folder decorations, active-run counters,
@@ -28,7 +30,7 @@ dataset-path security fix from the verified main branch.
 
 ## Breaking Changes
 
-None. This is a backward-compatible minor release.
+None. This is a backward-compatible patch release.
 
 ## Upgrade Path
 
@@ -55,6 +57,7 @@ pnpm verify
 
 ## Previous Release Notes
 
+- [4.1.2](docs/release-notes/4.1.2.md)
 - [4.1.1](docs/release-notes/4.1.1.md)
 - [4.1.0](docs/release-notes/4.1.0.md)
 - [3.0.0](docs/release-notes/3.0.0.md)
