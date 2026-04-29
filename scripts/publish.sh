@@ -5,8 +5,13 @@ set -euo pipefail
 if [ -d "fovux-mcp" ]; then
   : "${PYPI_TOKEN:?PYPI_TOKEN is required to publish fovux-mcp}"
   echo "Publishing fovux-mcp to PyPI..."
-  python -m twine upload fovux-mcp/dist/*.whl fovux-mcp/dist/*.tar.gz \
-    --non-interactive -u __token__ -p "$PYPI_TOKEN"
+  if command -v uv >/dev/null 2>&1; then
+    uvx twine upload fovux-mcp/dist/*.whl fovux-mcp/dist/*.tar.gz \
+      --non-interactive -u __token__ -p "$PYPI_TOKEN"
+  else
+    python -m twine upload fovux-mcp/dist/*.whl fovux-mcp/dist/*.tar.gz \
+      --non-interactive -u __token__ -p "$PYPI_TOKEN"
+  fi
 fi
 
 # Publish fovux-studio (VS Code Marketplace and Open VSX)
