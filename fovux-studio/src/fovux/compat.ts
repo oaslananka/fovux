@@ -12,7 +12,7 @@ export const FOVUX_COMPAT = {
   /** Recommended server version range for full feature parity. */
   recommended: ">=4.1.0 <5.0.0",
   /** Exact version this Studio build was tested against. */
-  testedAgainst: "4.1.1",
+  testedAgainst: "4.1.2",
 } as const;
 
 /** Possible compatibility classifications. */

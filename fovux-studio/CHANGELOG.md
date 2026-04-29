@@ -4,6 +4,13 @@ All notable changes to `fovux-studio` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [4.1.2] - 2026-04-29
+
+### Changed
+
+- CI now installs pinned `pnpm@10.33.0` through npm instead of Corepack activation to avoid
+  Windows runner hangs and keep Node 22/24 matrix builds deterministic.
+
 ## [4.1.1] - 2026-04-28
 
 ### Added

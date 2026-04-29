@@ -5,6 +5,18 @@ All notable changes to `fovux-mcp` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [4.1.2] - 2026-04-29
+
+### Fixed
+
+- Dataset format auto-detection now checks only conventional shallow VOC annotation locations
+  instead of recursively scanning arbitrary roots, so fuzzed paths such as `/` fail quickly and
+  safely.
+
+### Security
+
+- Hardened adversarial dataset path handling caught by the tool-input fuzz suite.
+
 ## [4.1.1] - 2026-04-28
 
 ### Added

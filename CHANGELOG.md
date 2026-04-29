@@ -4,6 +4,20 @@ All notable changes to Fovux are documented in this file.
 
 The format follows Keep a Changelog, and this project uses semantic versioning.
 
+## [4.1.2] - 2026-04-29
+
+### Fixed
+
+- Avoid recursive filesystem-root scans during dataset format auto-detection, preventing adversarial
+  `dataset_inspect("/")` inputs from traversing an entire drive.
+- Replace GitHub Actions Corepack pnpm activation with pinned `pnpm@10.33.0` npm installation to
+  remove Windows runner hangs while keeping CI installs deterministic.
+
+### Security
+
+- Revalidated the release image/security surface after the root-scan fix: Dependabot, Trivy, and
+  CodeQL actionable alerts are clean for the authoritative repository.
+
 ## [4.1.1] - 2026-04-28
 
 ### Added

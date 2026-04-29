@@ -9,7 +9,7 @@ describe("FOVUX_COMPAT constants", () => {
   it("has required, recommended, and testedAgainst fields", () => {
     expect(FOVUX_COMPAT.required).toBe(">=4.0.0 <5.0.0");
     expect(FOVUX_COMPAT.recommended).toBe(">=4.1.0 <5.0.0");
-    expect(FOVUX_COMPAT.testedAgainst).toBe("4.1.1");
+    expect(FOVUX_COMPAT.testedAgainst).toBe("4.1.2");
   });
 });
 

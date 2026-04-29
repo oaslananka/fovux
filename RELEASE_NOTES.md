@@ -1,12 +1,17 @@
-# Fovux 4.1.1 Release Notes
+# Fovux 4.1.2 Release Notes
 
-Fovux 4.1.1 is a release-readiness overhaul for the local-first YOLO workbench. It closes the
-remaining Studio manifest and workflow gaps, upgrades live run metrics to a canonical SSE endpoint,
-adds VS Code-native dataset/run/doctor UX, raises backend coverage to 92%, and hardens the container
-security signal behind GitHub code scanning.
+Fovux 4.1.2 is a patch release on top of the 4.1.1 release-readiness overhaul. It keeps the
+Studio and backend feature set intact while publishing the final CI runner hardening and
+dataset-path security fix from the verified main branch.
 
 ## Headline Wins
 
+- **Adversarial path handling.** Dataset format auto-detection no longer recursively scans an
+  arbitrary filesystem root when a fuzzed input points at `/` or a drive root.
+- **Stable CI package setup.** GitHub Actions install pinned `pnpm@10.33.0` through npm instead of
+  Corepack activation, avoiding Windows/Node 22 runner hangs.
+- **Clean security surface.** Dependabot, Trivy, and CodeQL actionable alerts were rechecked after
+  the patch and are clean on the authoritative repository.
 - **Canonical run streaming.** `/runs/{id}/stream` is now the preferred SSE metrics endpoint, with
   `/runs/{id}/metrics` kept as a compatibility alias.
 - **Studio integration polish.** CodeLens actions, run folder decorations, active-run counters,
@@ -50,6 +55,7 @@ pnpm verify
 
 ## Previous Release Notes
 
+- [4.1.1](docs/release-notes/4.1.1.md)
 - [4.1.0](docs/release-notes/4.1.0.md)
 - [3.0.0](docs/release-notes/3.0.0.md)
 - [2.0.0](docs/release-notes/2.0.0.md)
