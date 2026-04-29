@@ -22,11 +22,11 @@ maintainer-gated until release credentials are supplied.
 
 ## Screenshots
 
-![Fovux Dashboard](resources/screenshots/dashboard.png)
+![Fovux Dashboard](https://raw.githubusercontent.com/oaslananka/fovux/refs/heads/main/fovux-studio/resources/screenshots/dashboard.png)
 
-![Fovux Dataset Inspector](resources/screenshots/dataset-inspector.png)
+![Fovux Dataset Inspector](https://raw.githubusercontent.com/oaslananka/fovux/refs/heads/main/fovux-studio/resources/screenshots/dataset-inspector.png)
 
-![Fovux Export Wizard](resources/screenshots/export-wizard.png)
+![Fovux Export Wizard](https://raw.githubusercontent.com/oaslananka/fovux/refs/heads/main/fovux-studio/resources/screenshots/export-wizard.png)
 
 ## Requirements
 
