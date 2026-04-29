@@ -71,11 +71,11 @@ jobs:
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: Enable pnpm
+      - name: Install pnpm
         if: hashFiles('fovux-studio/package.json') != ''
         run: |
-          corepack enable
-          corepack prepare pnpm@10.33.0 --activate
+          npm install --global pnpm@10.33.0
+          pnpm --version
 
       - name: Install dependencies
         run: task install

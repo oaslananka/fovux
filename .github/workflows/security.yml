@@ -39,7 +39,7 @@ jobs:
       - name: Node production audit
         working-directory: fovux-studio
         run: |
-          corepack enable
-          corepack prepare pnpm@10.33.0 --activate
+          npm install --global pnpm@10.33.0
+          pnpm --version
           pnpm install --frozen-lockfile
           pnpm audit --prod
