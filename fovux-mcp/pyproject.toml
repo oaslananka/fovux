@@ -150,6 +150,7 @@ addopts = [
 ]
 markers = [
     "network: marks tests that require network access",
+    "integration: marks tests that spawn real services or exercise cross-process behavior",
     "slow: marks tests that take more than 30 seconds",
     "gpu: marks tests that require a GPU",
     "chaos: marks adversarial/chaos tests",

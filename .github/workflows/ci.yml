@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
-      - uses: arduino/setup-task@v2
+      - uses: arduino/setup-task@v2.0.0
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -83,7 +83,7 @@ jobs:
 
       - name: Publish test results
         if: always() && runner.os == 'Linux' && hashFiles('**/junit.xml', '**/test-results.xml') != ''
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2.23.0
         with:
           files: |
             **/junit.xml
@@ -91,6 +91,6 @@ jobs:
 
       - name: Test summary
         if: always() && hashFiles('**/junit.xml') != ''
-        uses: test-summary/action@v2
+        uses: test-summary/action@v2.4
         with:
           paths: "**/junit.xml"

@@ -54,7 +54,7 @@ tasks:
   test:fast:
     desc: Run only fast tests
     cmds:
-      - cmd: cd fovux-mcp && uv run pytest -x --no-header -q -m "not slow"
+      - cmd: cd fovux-mcp && uv run pytest -x --no-header -q -m "not slow and not integration and not network and not gpu and not security and not chaos and not benchmark"
 
   test:cov:
     desc: Run tests with coverage
