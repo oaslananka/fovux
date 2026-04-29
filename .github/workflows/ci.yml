@@ -38,10 +38,6 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
-      - uses: arduino/setup-task@v2.0.0
-        with:
-          version: 3.x
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v6
         if: hashFiles('fovux-mcp/pyproject.toml') != ''
@@ -62,6 +58,12 @@ jobs:
         with:
           go-version: "1.25.x"
           cache: false
+
+      - name: Install Task
+        shell: bash
+        run: |
+          go install github.com/go-task/task/v3/cmd/task@v3.50.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Install actionlint
         shell: bash
@@ -88,9 +90,3 @@ jobs:
           files: |
             **/junit.xml
             **/test-results.xml
-
-      - name: Test summary
-        if: always() && hashFiles('**/junit.xml') != ''
-        uses: test-summary/action@v2.4
-        with:
-          paths: "**/junit.xml"
