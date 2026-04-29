@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from fovux.core.errors import FovuxDatasetNotFoundError
+from fovux.core.errors import FovuxDatasetFormatError, FovuxDatasetNotFoundError
 from fovux.schemas.dataset import DatasetInspectInput
 from fovux.tools.dataset_inspect import _run_inspect
 
@@ -56,6 +56,19 @@ def test_inspect_nonexistent_path():
     """Should raise FovuxDatasetNotFoundError for missing path."""
     with pytest.raises(FovuxDatasetNotFoundError):
         _run_inspect(DatasetInspectInput(dataset_path=Path("/nonexistent/dataset")))
+
+
+def test_inspect_filesystem_root_rejects_without_recursive_scan(monkeypatch: pytest.MonkeyPatch):
+    """Filesystem roots should be rejected without recursively scanning the drive."""
+    from fovux.core import dataset_utils
+
+    def fail_rglob(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("recursive root scan should not be used during format detection")
+
+    monkeypatch.setattr(Path, "rglob", fail_rglob)
+
+    with pytest.raises(FovuxDatasetFormatError):
+        dataset_utils.detect_format(Path("/").resolve())
 
 
 def test_inspect_sample_paths_included():

@@ -55,15 +55,30 @@ def detect_format(dataset_path: Path) -> str:
             except (json.JSONDecodeError, KeyError):
                 pass
 
-    xml_files = list(dataset_path.rglob("*.xml"))
-    if xml_files:
+    if _has_voc_annotations(dataset_path):
         return "voc"
 
     raise FovuxDatasetFormatError(
         f"Cannot detect dataset format in {dataset_path}. "
-        "Expected data.yaml (YOLO), annotations/*.json (COCO), or *.xml (VOC).",
+        "Expected data.yaml (YOLO), annotations/*.json (COCO), or Annotations/*.xml (VOC).",
         hint="Specify format explicitly with format='yolo'|'coco'|'voc'.",
     )
+
+
+def _has_voc_annotations(dataset_path: Path) -> bool:
+    """Return true when standard VOC annotation files are present.
+
+    VOC detection intentionally checks only conventional shallow locations. A
+    broad recursive search can traverse an entire drive when adversarial input
+    points at a filesystem root.
+    """
+    for annotations_dir in (
+        dataset_path / "Annotations",
+        dataset_path / "annotations",
+    ):
+        if annotations_dir.is_dir() and next(annotations_dir.glob("*.xml"), None) is not None:
+            return True
+    return next(dataset_path.glob("*.xml"), None) is not None
 
 
 # ── YOLO helpers ──────────────────────────────────────────────────────────────
